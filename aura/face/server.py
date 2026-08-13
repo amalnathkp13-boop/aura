@@ -4,7 +4,15 @@ from flask import Flask, jsonify, request, send_from_directory
 
 STATIC = Path(__file__).parent / "static"
 
+def _int_arg(name, default):
+    try:
+        return max(0, int(request.args.get(name, default)))
+    except (TypeError, ValueError):
+        return default
+
 def _tail_jsonl(path: Path, n: int):
+    if n <= 0:
+        return []
     if not path.exists():
         return []
     lines = path.read_text(encoding="utf-8").strip().splitlines()[-n:]
@@ -30,37 +38,51 @@ def create_app(cfg):
     @app.get("/api/state")
     def state():
         p = cfg.aura_home / "state.json"
-        if not p.exists():
+        try:
+            d = json.loads(p.read_text())
+        except Exception:
             return jsonify({"src": "none"})
-        return jsonify(json.loads(p.read_text()))
+        return jsonify(d if isinstance(d, dict) else {"src": "none"})
 
     @app.get("/api/waterfall")
     def waterfall():
-        n = int(request.args.get("n", 120))
+        n = _int_arg("n", 120)
         return jsonify(_tail_jsonl(cfg.aura_home / "features.jsonl", n))
 
     @app.get("/api/alerts")
     def alerts():
-        n = int(request.args.get("n", 20))
+        n = _int_arg("n", 20)
         return jsonify(_tail_jsonl(cfg.aura_home / "alerts.jsonl", n))
 
     @app.post("/api/mode")
     def mode():
-        body = request.get_json(force=True)
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"error": "bad body"}), 400
         if body.get("mode") not in ("home", "away", "wellness"):
             return jsonify({"error": "bad mode"}), 400
+        try:
+            hours = int(body.get("wellness_hours", 8))
+        except (TypeError, ValueError):
+            return jsonify({"error": "bad wellness_hours"}), 400
         (cfg.aura_home / "mode.json").write_text(json.dumps(
-            {"mode": body["mode"], "wellness_hours": int(body.get("wellness_hours", 8))}))
+            {"mode": body["mode"], "wellness_hours": hours}))
         return jsonify({"ok": True})
 
     @app.post("/api/calibrate")
     def calibrate():
-        body = request.get_json(force=True)
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"error": "bad body"}), 400
         phase = body.get("phase")
         if phase not in ("empty", "walk"):
             return jsonify({"error": "bad phase"}), 400
+        try:
+            minutes = int(body.get("minutes", 10))
+        except (TypeError, ValueError):
+            return jsonify({"error": "bad minutes"}), 400
         subprocess.Popen([sys.executable, "-m", "aura.cli", "calibrate", phase,
-                          "--minutes", str(int(body.get("minutes", 10)))])
+                          "--minutes", str(minutes)])
         return jsonify({"started": True})
 
     return app

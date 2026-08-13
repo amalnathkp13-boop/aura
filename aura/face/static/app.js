@@ -1,4 +1,5 @@
 const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function j(url, opts) { const r = await fetch(url, opts); return r.json(); }
 
 async function tick() {
@@ -12,7 +13,7 @@ async function tick() {
   drawWaterfall(rows);
   const alerts = await j('/api/alerts?n=10');
   $('alerts').innerHTML = alerts.reverse().map(a =>
-    `<li>${new Date(a.ts * 1000).toLocaleTimeString()} — ${a.type}</li>`).join('');
+    `<li>${new Date(a.ts * 1000).toLocaleTimeString()} — ${esc(a.type)}</li>`).join('');
 }
 
 function drawWaterfall(rows) {

@@ -31,3 +31,26 @@ def test_mode_roundtrip_and_validation(tmp_path, monkeypatch):
 def test_index_served(tmp_path, monkeypatch):
     _, c = _client(tmp_path, monkeypatch)
     assert b"Aura" in c.get("/").data
+
+def test_bad_inputs_never_500(tmp_path, monkeypatch):
+    cfg, c = _client(tmp_path, monkeypatch)
+    assert c.post("/api/mode", data="[1,2,3]", content_type="application/json").status_code == 400
+    assert c.post("/api/mode", data="not json", content_type="application/json").status_code == 400
+    assert c.post("/api/mode", json={"mode": "away", "wellness_hours": "eight"}).status_code == 400
+    assert c.post("/api/calibrate", data="[]", content_type="application/json").status_code == 400
+    assert c.post("/api/calibrate", json={"phase": "nope"}).status_code == 400
+    assert c.get("/api/waterfall?n=abc").status_code == 200
+    assert c.get("/api/waterfall?n=0").get_json() == []
+    (cfg.aura_home / "state.json").write_text("{corrupt")
+    assert c.get("/api/state").get_json() == {"src": "none"}
+    (cfg.aura_home / "state.json").write_text("[1,2]")
+    assert c.get("/api/state").get_json() == {"src": "none"}
+
+def test_alerts_endpoint(tmp_path, monkeypatch):
+    import json as _json
+    cfg, c = _client(tmp_path, monkeypatch)
+    with open(cfg.aura_home / "alerts.jsonl", "w") as fh:
+        for i in range(5):
+            fh.write(_json.dumps({"type": "intrusion", "ts": float(i)}) + "\n")
+    rows = c.get("/api/alerts?n=3").get_json()
+    assert len(rows) == 3 and rows[-1]["ts"] == 4.0
