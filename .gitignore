@@ -1,0 +1,7 @@
+.superpowers/
+__pycache__/
+*.pyc
+.venv/
+data/sessions/
+*.npz
+.pytest_cache/
