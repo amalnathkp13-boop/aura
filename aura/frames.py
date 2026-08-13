@@ -43,7 +43,10 @@ def tail_frames(path: Path, poll_s: float = 0.25):
         if p.exists():
             with open(p, "r", encoding="utf-8") as fh:
                 fh.seek(pos)
-                for line in fh:
+                while True:
+                    line = fh.readline()
+                    if not line:
+                        break
                     if not line.endswith("\n"):
                         break
                     pos = fh.tell()
