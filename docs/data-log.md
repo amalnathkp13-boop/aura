@@ -17,8 +17,11 @@ Ground truth comes from (a) the PC webcam labeler (`aura.labeler`) during attend
 - 2026-08-13 **~14:57–15:05 IST: POWER-CUT DRILL** (deliberate board reboot). EXCLUDE this window from training (reboot RF churn, brief recording gap). Result: 4 services + clock + recording auto-recovered; matrix app did NOT (status failed) → fixed with aura-matrix-boot.service (delayed retry at boot) + manual restart. Baseline (auto-default thresholds) showed presence=1 during empty-room drill churn — expected; CNN + real calibration replace it.
 - Rig stays at home for the whole campaign; classroom deployment reserved for post-submission demo via on-site calibration.
 
+**Appliance ground truth:** ceiling fan runs at night while sleeping (user-declared 2026-08-13) → overnight occupied data = fan ON. Needed for contrast: several hours of **fan ON + room EMPTY** (user to leave fan on when departing some day-windows) so the model learns fan ≠ person. Log fan state with each declared window.
+
 Open items:
-- [ ] User confirms board placement room + that it stays powered
-- [ ] Labeler camera connected (webcam / phone-as-webcam) → start labeler on PC
-- [ ] User declares tonight's occupancy (empty overnight ⇒ gold empty labels)
+- [x] Board placement: user's bedroom, stays powered (2026-08-13)
+- [x] Labeler camera: DroidCam via direct MJPEG parser (2026-08-13)
+- [ ] Fan-ON empty window (≥2 h) — ask user to leave fan on at next departure
+- [ ] Metrics (Task 16): scripted "fan on, room empty, 1 h" false-alarm test for the report
 - [ ] Target by day 9 of plan: ≥20 h total, ≥4 empty + ≥4 occupied periods
