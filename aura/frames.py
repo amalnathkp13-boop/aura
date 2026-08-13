@@ -1,4 +1,4 @@
-import hashlib, json, time
+import hashlib, json, os, time
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 
@@ -39,12 +39,17 @@ def read_frames(path: Path):
 def tail_frames(path: Path, poll_s: float = 0.25, from_end: bool = False, stop_event=None):
     p = Path(path)
     pos = p.stat().st_size if (from_end and p.exists()) else 0
+    ino = None
     while True:
         p = Path(path)
         if p.exists():
-            if pos > p.stat().st_size:
-                pos = 0  # file rotated/truncated underneath us
             with open(p, "r", encoding="utf-8") as fh:
+                st = os.fstat(fh.fileno())
+                if ino is None:
+                    ino = st.st_ino
+                elif st.st_ino != ino or pos > st.st_size:
+                    pos = 0  # rotated (new file identity) or truncated
+                    ino = st.st_ino
                 fh.seek(pos)
                 while True:
                     line = fh.readline()

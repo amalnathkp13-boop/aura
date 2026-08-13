@@ -84,3 +84,22 @@ def test_tail_frames_survives_rotation(tmp_path):
     time.sleep(0.4)
     assert 100.0 in got
     stop.set(); t.join(timeout=2)
+
+def test_tail_frames_rotation_no_loss_when_new_file_outgrows_old(tmp_path):
+    import threading, time
+    from aura.frames import tail_frames
+    p = tmp_path / "f.jsonl"
+    for i in range(2):
+        append_frame(p, RFFrame(ts=float(i), wifi={"aabbccdd": -60.0}, link=[], ble={}))
+    stop, got = threading.Event(), []
+    t = threading.Thread(target=lambda: [got.append(f.ts) for f in tail_frames(p, poll_s=0.05, stop_event=stop)])
+    t.start(); time.sleep(0.3)
+    assert got == [0.0, 1.0]
+    p.rename(p.with_suffix(".jsonl.old"))
+    for i in range(10, 30):  # new file quickly outgrows the stale pos, variable-length lines
+        append_frame(p, RFFrame(ts=float(i), wifi={"aabbccdd": -60.0, "x" * (i % 7 + 1): -70.0}, link=[-50.0], ble={}))
+    time.sleep(0.5)
+    assert got[:2] == [0.0, 1.0]
+    assert got[2:] == [float(i) for i in range(10, 30)]  # nothing dropped, nothing garbage
+    stop.set(); t.join(timeout=2)
+    assert not t.is_alive()

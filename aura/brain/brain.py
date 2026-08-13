@@ -30,10 +30,11 @@ def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_i
     window = deque(maxlen=int(cfg.window_seconds * cfg.frame_hz * 2))
     for f in read_frames(frames_path)[-window.maxlen:]:
         window.append(f)
-    state_out = {"n": 0, "last_infer": 0.0}
+    n = 0
+    last_infer = 0.0
 
     def infer(now):
-        nonlocal cal, baseline
+        nonlocal cal, baseline, n, last_infer
         w = [x for x in window if x.ts >= now - cfg.window_seconds]
         if len(w) < 8:
             return False
@@ -54,13 +55,13 @@ def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_i
         with open(cfg.aura_home / "features.jsonl", "a", encoding="utf-8") as fh:
             chans = np.std(np.diff(m, axis=1), axis=1).round(4).tolist()
             fh.write(json.dumps({"ts": now, **s, "channels": chans}) + "\n")
-        state_out["last_infer"] = now
-        state_out["n"] += 1
+        last_infer = now
+        n += 1
         return True
 
     if window:
         infer(window[-1].ts)
-    if max_iters is not None and state_out["n"] >= max_iters:
+    if max_iters is not None and n >= max_iters:
         return
     gen = tail_frames(frames_path, poll_s=0.25, from_end=True, stop_event=stop_event)
     while not stop_event.is_set():
@@ -69,7 +70,7 @@ def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_i
         except StopIteration:
             break
         window.append(f)
-        if f.ts - state_out["last_infer"] >= 0.5:
+        if f.ts - last_infer >= 0.5:
             infer(f.ts)
-        if max_iters is not None and state_out["n"] >= max_iters:
+        if max_iters is not None and n >= max_iters:
             break
