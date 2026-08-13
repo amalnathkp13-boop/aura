@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aura</title><link rel="stylesheet" href="/static/style.css"></head><body>
+<header><h1>Aura</h1><span id="srcbadge"></span></header>
+<section id="statecards">
+  <div class="card"><div class="k">Presence</div><div class="v" id="presence">–</div></div>
+  <div class="card"><div class="k">Motion</div><div class="v" id="motion">–</div></div>
+  <div class="card"><div class="k">Activity</div><div class="v" id="activity">–</div></div>
+</section>
+<section><h2>RF waterfall</h2><canvas id="waterfall" width="720" height="240"></canvas></section>
+<section><h2>Mode</h2>
+  <button data-mode="home">Home</button><button data-mode="away">Away (armed)</button>
+  <button data-mode="wellness">Wellness</button>
+  <button id="cal">Learn my room</button>
+</section>
+<section><h2>Alerts</h2><ul id="alerts"></ul></section>
+<script src="/static/app.js"></script></body></html>

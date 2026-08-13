@@ -1,0 +1,15 @@
+:root { color-scheme: dark; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #0b0e14; color: #dce3f0; }
+header { display: flex; align-items: baseline; gap: 1rem; padding: 1rem 1.5rem; border-bottom: 1px solid #1c2333; }
+h1 { margin: 0; font-size: 1.4rem; letter-spacing: .2em; color: #7ac7ff; }
+#srcbadge { font-size: .75rem; color: #6b7690; }
+section { padding: 1rem 1.5rem; }
+#statecards { display: flex; gap: 1rem; }
+.card { background: #121826; border: 1px solid #1c2333; border-radius: 10px; padding: 1rem 1.5rem; min-width: 8rem; }
+.card .k { font-size: .7rem; text-transform: uppercase; color: #6b7690; }
+.card .v { font-size: 1.6rem; font-weight: 700; }
+body.present .card .v { color: #7affc4; }
+canvas { width: 100%; max-width: 720px; border-radius: 8px; }
+button { background: #1a2340; color: #dce3f0; border: 1px solid #2a3550; border-radius: 8px; padding: .5rem 1rem; margin-right: .5rem; cursor: pointer; }
+button:hover { border-color: #7ac7ff; }
+ul { margin: 0; padding-left: 1.2rem; color: #ffb37a; }
