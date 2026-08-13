@@ -5,3 +5,4 @@ __pycache__/
 data/sessions/
 *.npz
 .pytest_cache/
+aura.egg-info/
