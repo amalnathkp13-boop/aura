@@ -81,7 +81,8 @@ def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_i
         _atomic_write(cfg.aura_home / "state.json", {"ts": now, **state, "src": src})
         with open(cfg.aura_home / "features.jsonl", "a", encoding="utf-8") as fh:
             chans = np.std(np.diff(m, axis=1), axis=1).round(4).tolist()
-            fh.write(json.dumps({"ts": now, **s, "channels": chans}) + "\n")
+            spec = np.abs(np.fft.rfft(m, axis=1)).mean(axis=0)[1:]  # drop DC; 30 bins for out_len 60
+            fh.write(json.dumps({"ts": now, **s, "channels": chans, "spectrum": spec.round(3).tolist()}) + "\n")
         last_infer = now
         n += 1
         return True

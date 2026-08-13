@@ -29,6 +29,9 @@ def test_brain_baseline_only(tmp_path, monkeypatch):
     feats = (tmp_path / "features.jsonl").read_text().strip().splitlines()
     assert len(feats) >= 1
     assert len(json.loads(feats[0])["channels"]) == 2  # 1 link + link-stream
+    spectrum = json.loads(feats[-1])["spectrum"]
+    assert len(spectrum) == 30
+    assert all(v >= 0 for v in spectrum)
 
 def test_brain_cnn_path(tmp_path, monkeypatch):
     from training.dataset import build_dataset

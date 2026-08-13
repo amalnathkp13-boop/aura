@@ -13,6 +13,13 @@
     <p>Each row is one invisible radio path through the room — AP rows come from surrounding WiFi networks, LINK is the board's own connection (the sharpest sensor). Time flows left to right (last ~60 s). Dark = path calm; bright = a body is bending that path. A person walking paints bright vertical bands across several rows at once; an empty room stays dark; a single flickering row alone is just radio noise.</p>
   </details>
 </section>
+<section><h2>Motion spectrogram</h2>
+  <div class="wf-legend"><span>calm</span><span class="wf-legend-bar"></span><span>disturbed</span></div>
+  <canvas id="spectrogram" width="720" height="200"></canvas>
+  <details class="how"><summary>How to read this</summary>
+    <p>This is the room's motion rhythm. Y = how fast something repeats (Hz), X = time. A person walking lights the 0.5–2 Hz band in bursts; breathing sits near the bottom; a ceiling fan draws one thin steady line; an empty room is dark.</p>
+  </details>
+</section>
 <section><h2>Mode</h2>
   <button data-mode="home">Home</button><button data-mode="away">Away (armed)</button>
   <button data-mode="wellness">Wellness</button>
