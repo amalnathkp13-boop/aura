@@ -48,7 +48,7 @@ def train(npz: Path, val_sessions, out: Path, epochs: int = 30, lr: float = 1e-3
     out.parent.mkdir(parents=True, exist_ok=True)
     torch.onnx.export(model, torch.zeros(1, d["x"].shape[1], 60), str(out),
                       input_names=["rf"], output_names=["presence", "motion", "activity"],
-                      dynamic_axes={"rf": {0: "batch"}}, opset_version=17)
+                      dynamic_axes={"rf": {0: "batch"}}, opset_version=18)
     metrics = {"val_presence_acc": acc, "n_train": int((~val_mask).sum()), "n_val": int(val_mask.sum())}
     print(metrics)
     return metrics

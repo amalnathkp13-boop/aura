@@ -29,6 +29,8 @@ def build_dataset(session_dirs, link_ids, out_npz: Path):
                 ya.append(min(100.0, mean_motion * 2000.0))
                 names.append(d.name)
             t += STEP_S
-    np.savez(out_npz, x=np.array(X, dtype=np.float32), y_presence=np.array(yp),
-             y_motion=np.array(ym), y_activity=np.array(ya, dtype=np.float32),
+    C = len(link_ids) + 1
+    x_arr = np.array(X, dtype=np.float32) if X else np.zeros((0, C, 60), dtype=np.float32)
+    np.savez(out_npz, x=x_arr, y_presence=np.array(yp, dtype=np.float32),
+             y_motion=np.array(ym, dtype=np.float32), y_activity=np.array(ya, dtype=np.float32),
              session=np.array(names))

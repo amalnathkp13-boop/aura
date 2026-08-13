@@ -1,4 +1,4 @@
-import numpy as np, subprocess, sys
+import numpy as np
 from pathlib import Path
 from aura.frames import RFFrame, append_frame
 from aura.labeler.labeler import write_label
@@ -24,6 +24,8 @@ def test_build_dataset(tmp_path):
     assert d["x"].shape[1:] == (2, 60)      # 1 link + link-stream
     assert set(d["y_presence"]) == {0, 1}
     assert len(d["x"]) == len(d["session"])
+    assert d["x"].dtype == np.float32
+    assert d["y_presence"].dtype == np.float32 and d["y_motion"].dtype == np.float32
 
 def test_train_and_export_onnx(tmp_path):
     from training.dataset import build_dataset

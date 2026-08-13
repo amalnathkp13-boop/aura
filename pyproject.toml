@@ -6,7 +6,7 @@ dependencies = ["numpy", "flask", "requests"]
 
 [project.optional-dependencies]
 board = ["onnxruntime", "pyserial"]
-train = ["torch", "onnx", "onnxruntime", "ultralytics", "opencv-python"]
+train = ["torch", "onnx", "onnxruntime", "ultralytics", "opencv-python", "onnxscript"]
 dev = ["pytest"]
 
 [project.scripts]
