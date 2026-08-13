@@ -103,7 +103,7 @@ Data flows one way: **RF Ear → Aura Brain → { Face, Guardian }**. Each unit 
 
 ## 10. Submission package
 
-- **Video (3–4 min, story arc):** camera draped with cloth → lights off → person enters → matrix blooms, phone buzzes → waterfall ripples on the dashboard → "Learn my room" montage → eldercare framing close.
+- **Video (3–4 min, story arc):** a prop security camera gets draped with a cloth (cameras can be defeated; Aura has no lens to cover) → lights off → person enters → matrix blooms, phone buzzes → waterfall ripples on the dashboard → "Learn my room" montage → eldercare framing close.
 - **Repo (open-source):** full code, README with architecture diagram, dataset description + collection protocol, honest metrics table (baseline vs CNN), reproduction guide.
 - **Write-up:** leads with the one-line pitch; explicit "what it is / what it is not" honesty section; dual-brain utilization diagram; privacy-by-design notes (no cameras, hashed MACs, all processing on-device, nothing leaves the LAN except opt-in Telegram alerts).
 
