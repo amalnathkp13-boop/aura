@@ -20,12 +20,24 @@ def _load_cal(home: Path):
 def _sig(z):
     return 1.0 / (1.0 + np.exp(-float(z)))
 
+# Auto-calibration mode (no calibration.json on disk) has no measured thresholds,
+# so it always falls back to these constants for the Baseline. link_ids, by
+# contrast, are re-derived every inference (see infer()) instead of being cached
+# once - a boot-time window with no WiFi yet must not freeze the selection forever.
+AUTO_EMPTY_P995 = 0.05
+AUTO_ACTIVITY_SCALE = 0.5
+
 def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_iters=None):
     sess = None
+    model_channels = None
     if model_path and Path(model_path).exists():
         import onnxruntime as ort
         sess = ort.InferenceSession(str(model_path))
+        shape = sess.get_inputs()[0].shape
+        dim1 = shape[1] if len(shape) > 1 else None
+        model_channels = dim1 if isinstance(dim1, int) else None
     cal = _load_cal(cfg.aura_home)
+    auto_mode = cal is None
     baseline = None
     window = deque(maxlen=int(cfg.window_seconds * cfg.frame_hz * 2))
     for f in read_frames(frames_path)[-window.maxlen:]:
@@ -34,15 +46,30 @@ def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_i
     last_infer = 0.0
 
     def infer(now):
-        nonlocal cal, baseline, n, last_infer
+        nonlocal baseline, n, last_infer
         w = [x for x in window if x.ts >= now - cfg.window_seconds]
         if len(w) < 8:
             return False
-        if cal is None:
-            cal = {"link_ids": select_links(w, cfg.top_k), "empty_p995": 0.05, "activity_scale": 0.5}
-        if baseline is None:
-            baseline = Baseline(cal)
-        m = build_matrix(w, cal["link_ids"])
+        if auto_mode:
+            link_ids = select_links(w, cfg.top_k)
+            if sess is not None:
+                # ONNX input channel count is fixed at export time (link count + 1 for
+                # the link stream); auto-mode's live selection can vary call-to-call,
+                # so pad/truncate to match. Fall back to cfg.top_k when the model's
+                # channel axis is dynamic/unreadable.
+                want = (model_channels - 1) if model_channels else cfg.top_k
+                if len(link_ids) < want:
+                    link_ids = link_ids + [f"pad{i}" for i in range(want - len(link_ids))]
+                elif len(link_ids) > want:
+                    link_ids = link_ids[:want]
+            if baseline is None:
+                baseline = Baseline({"link_ids": [], "empty_p995": AUTO_EMPTY_P995,
+                                     "activity_scale": AUTO_ACTIVITY_SCALE})
+        else:
+            link_ids = cal["link_ids"]
+            if baseline is None:
+                baseline = Baseline(cal)
+        m = build_matrix(w, link_ids)
         s = summary(m, window_seconds=cfg.window_seconds)
         state = baseline.update(s, ts=now)
         src = "baseline"

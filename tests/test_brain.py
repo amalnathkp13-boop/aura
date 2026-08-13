@@ -62,6 +62,44 @@ def test_brain_auto_calibration_fallback(tmp_path, monkeypatch):
     assert state["src"] == "baseline"
     assert set(state) == {"ts", "presence", "motion", "activity", "src"}
 
+def test_auto_cal_recovers_when_wifi_appears(tmp_path, monkeypatch):
+    # Regression for the boot-race bug: run_brain's auto-calibration fallback used to
+    # derive link_ids ONCE (on the very first inference) and cache it in the closure
+    # for the rest of the process's life. On a real board the brain starts before
+    # WiFi associates, so that first window has empty `wifi` dicts -> select_links
+    # returns [] -> the brain ran forever with zero WiFi channels even after WiFi came
+    # up. This drives a single long-running run_brain() (background thread, matching
+    # test_brain_stops_when_idle's pattern) through exactly that boot-then-recover
+    # sequence and asserts the SAME continuous run re-derives link_ids once WiFi
+    # frames start streaming in via the live tail_frames path.
+    import time as _time
+    from aura.frames import RFFrame, append_frame
+    monkeypatch.setenv("AURA_HOME", str(tmp_path))
+    cfg = Config.load()
+    frames_path = tmp_path / "frames.jsonl"
+    now = _time.time()
+    for i in range(40):  # boot phase: no wifi visible yet
+        append_frame(frames_path, RFFrame(ts=now - 40 + i * 0.25, wifi={}, link=[-50.0], ble={}))
+    stop = threading.Event()
+    t = threading.Thread(target=run_brain, args=(cfg, frames_path, stop), kwargs={"model_path": None})
+    t.start()
+    _time.sleep(0.6)  # let the initial preload inference (boot-phase window) land
+    feats = [json.loads(l) for l in (tmp_path / "features.jsonl").read_text().splitlines()]
+    assert len(feats[-1]["channels"]) == 1  # link stream only, as expected during boot
+
+    rng = np.random.default_rng(0)
+    live_now = _time.time()
+    for i in range(80):  # wifi comes up mid-run, streamed live into the SAME running brain
+        append_frame(frames_path, RFFrame(ts=live_now + i * 0.05,
+                     wifi={"aaaaaaaa": -60 + rng.normal(0, 2), "bbbbbbbb": -70 + rng.normal(0, 2)},
+                     link=[-50.0], ble={}))
+    _time.sleep(1.5)  # give the running thread time to poll, re-window, and re-infer
+    stop.set()
+    t.join(timeout=5)
+    assert not t.is_alive()
+    feats = [json.loads(l) for l in (tmp_path / "features.jsonl").read_text().splitlines()]
+    assert len(feats[-1]["channels"]) == 3  # 2 wifi links + link stream: selection recovered
+
 def test_brain_stops_when_idle(tmp_path, monkeypatch):
     import time as _time
     monkeypatch.setenv("AURA_HOME", str(tmp_path))
