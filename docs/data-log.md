@@ -13,6 +13,7 @@ Ground truth comes from (a) the PC webcam labeler (`aura.labeler`) during attend
 - Board room = user's BEDROOM (someone sleeps there every night).
 - 2026-08-13 ~14:20 IST onward: user in room; overnight 13→14 Aug = OCCUPIED, sleeping (person=1, motion≈0). NOT empty-room data.
 - Empty windows expected during college hours — user to declare departure/return times daily.
+- 2026-08-13 **14:40 IST: user declared "leaving now"** → room EMPTY from ~14:40 until user returns (phone/hotspot/camera stayed home). Labeler had silently stalled 14:19–14:45 (hung socket, fixed with timeouts+watchdog); labels in that gap are absent, declaration covers it.
 - Rig stays at home for the whole campaign; classroom deployment reserved for post-submission demo via on-site calibration.
 
 Open items:
