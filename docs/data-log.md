@@ -6,8 +6,14 @@ Ground truth comes from (a) the PC webcam labeler (`aura.labeler`) during attend
 
 | Session / period (IST) | Frames | Ground truth | Notes |
 |---|---|---|---|
-| bank1 · 2026-08-13 ~13:10–13:20 | 2,102 | UNKNOWN — ask user | Ad-hoc pre-service recording; usable only if user recalls room occupancy |
-| live spool · 2026-08-13 13:16 → ongoing | 4 Hz continuous | pending labeler + user log | aura-ear service; archived hourly |
+| bank1 · 2026-08-13 ~13:10–13:20 | 2,102 | occupied (user present, setup activity) | Ad-hoc pre-service recording during rig setup |
+| live spool · 2026-08-13 13:16 → ongoing | 4 Hz continuous | labeler + declarations below | aura-ear service; archived hourly |
+
+**Declared ground truth (user statements):**
+- Board room = user's BEDROOM (someone sleeps there every night).
+- 2026-08-13 ~14:20 IST onward: user in room; overnight 13→14 Aug = OCCUPIED, sleeping (person=1, motion≈0). NOT empty-room data.
+- Empty windows expected during college hours — user to declare departure/return times daily.
+- Rig stays at home for the whole campaign; classroom deployment reserved for post-submission demo via on-site calibration.
 
 Open items:
 - [ ] User confirms board placement room + that it stays powered
