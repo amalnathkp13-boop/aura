@@ -38,14 +38,16 @@ FACE_PORT = 8080
 CANDIDATE_HOSTS = [h for h in [os.environ.get("HOST_IP"), "msgpack-rpc-router"] if h]
 
 POLL_INTERVAL_S = 0.2
-HTTP_TIMEOUT_S = 1.0
+HTTP_TIMEOUT_S = 0.3
 ALERT_CHECK_INTERVAL_S = 2.0
 ALERT_FRESH_S = 60.0
 HEARTBEAT_EVERY_S = 30.0
+BACKOFF_S = 5.0
 
 logger = Logger("aura-matrix")
 
 _working_host = None
+_backoff_until = 0.0
 
 
 def _get_json(path):
@@ -53,8 +55,17 @@ def _get_json(path):
     last host that worked first) until one succeeds. Returns None on any
     failure (service down, timeout, bad JSON, ...) so callers can fall back
     to a safe default -- never raises.
+
+    Negative-cache: if every host failed on a previous call, skip HTTP
+    entirely until BACKOFF_S has passed -- an aura-face outage must not
+    stack up to ~4s of worst-case per-tick timeout (2 hosts x 2 endpoints
+    x HTTP_TIMEOUT_S), it should degrade to the zero-state fallback fast
+    and stay there until the service is plausibly back.
     """
-    global _working_host
+    global _working_host, _backoff_until
+    if time.time() < _backoff_until:
+        return None
+
     hosts = CANDIDATE_HOSTS
     if _working_host in hosts:
         hosts = [_working_host] + [h for h in hosts if h != _working_host]
@@ -68,6 +79,8 @@ def _get_json(path):
             return data
         except Exception:
             continue
+
+    _backoff_until = time.time() + BACKOFF_S
     return None
 
 
@@ -136,7 +149,10 @@ def loop():
     presence, motion, activity = _read_state()
     alert = _alert_active(now)
 
-    Bridge.call("state", bytes([presence, motion, activity, alert]))
+    try:
+        Bridge.call("state", bytes([presence, motion, activity, alert]))
+    except Exception:
+        pass  # transient bridge hiccup must never kill the loop
 
     _tick_count += 1
     if now - _last_heartbeat >= HEARTBEAT_EVERY_S:

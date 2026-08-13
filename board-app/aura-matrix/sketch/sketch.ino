@@ -95,10 +95,10 @@ void setup() {
   matrix.setGrayscaleBits(3);   // accept 0..7 brightness values
   matrix.clear();
 
+  lastStateMs = millis();
+
   Bridge.begin();
   Bridge.provide("state", state);
-
-  lastStateMs = millis();
 }
 
 void loop() {
