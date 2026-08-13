@@ -8,7 +8,7 @@ class Baseline:
     def update(self, s: dict, ts: float) -> dict:
         motion = int(s["motion_energy"] > self.cal["empty_p995"])
         if motion:
-            self._last_motion_ts = ts
+            self._last_motion_ts = ts if self._last_motion_ts is None else max(self._last_motion_ts, ts)
         presence = int(self._last_motion_ts is not None
                        and ts - self._last_motion_ts <= self.PRESENCE_DECAY_S)
         scale = self.cal.get("activity_scale") or 1.0

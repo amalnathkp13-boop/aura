@@ -29,3 +29,17 @@ def test_baseline_state_machine():
     assert s["motion"] == 0 and s["presence"] == 1      # latched
     s = b.update({"motion_energy": 0.01, "band_energy": 0.0, "xcorr": 0.0}, ts=100.0 + 130)
     assert s["presence"] == 0                            # decayed after 120s
+
+def test_out_of_order_motion_does_not_regress_latch():
+    cal = {"link_ids": ["aaaaaaaa"], "empty_p995": 0.1, "activity_scale": 1.0}
+    b = Baseline(cal)
+    b.update({"motion_energy": 0.5, "band_energy": 0, "xcorr": 0}, ts=100.0)
+    b.update({"motion_energy": 0.5, "band_energy": 0, "xcorr": 0}, ts=50.0)   # stale frame
+    s = b.update({"motion_energy": 0.01, "band_energy": 0, "xcorr": 0}, ts=171.0)
+    assert s["presence"] == 1  # only 71s since true latest motion
+
+def test_activity_scale_fallback_when_missing_or_zero():
+    for cal in ({"link_ids": [], "empty_p995": 0.1},
+                {"link_ids": [], "empty_p995": 0.1, "activity_scale": 0}):
+        s = Baseline(cal).update({"motion_energy": 0.5, "band_energy": 0, "xcorr": 0}, ts=1.0)
+        assert s["activity"] == 50.0
