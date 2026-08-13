@@ -17,19 +17,26 @@ def main(url: str, out_path: Path):
     model = YOLO("yolov8n.pt")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     cap, prev, last_label = None, None, 0.0
+    last_ok_read = time.time()
     print(f"labeling {url} -> {out_path}", flush=True)
     while True:
         if cap is None:
-            cap = cv2.VideoCapture(url)
+            # FFMPEG-level timeouts: a dead/stalled socket must fail fast, not block forever
+            cap = cv2.VideoCapture(url, cv2.CAP_FFMPEG,
+                                   [cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000,
+                                    cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000])
             if not cap.isOpened():
                 cap.release(); cap = None
                 print("stream down, retrying in 5s", flush=True)
                 time.sleep(5)
                 continue
+            last_ok_read = time.time()
         ok, frame = cap.read()
-        if not ok:
+        if not ok or time.time() - last_ok_read > 15.0:
+            print("stream stalled, reconnecting", flush=True)
             cap.release(); cap = None
             continue
+        last_ok_read = time.time()
         now = time.time()
         if now - last_label < 1.0:
             continue
