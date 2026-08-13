@@ -19,8 +19,11 @@ def append_frame(path: Path, f: RFFrame) -> None:
 def _parse(line: str):
     try:
         d = json.loads(line)
-        return RFFrame(ts=d["ts"], wifi=d.get("wifi", {}), link=d.get("link", []), ble=d.get("ble", {}))
-    except (json.JSONDecodeError, KeyError):
+        if not isinstance(d, dict):
+            return None
+        return RFFrame(ts=float(d["ts"]), wifi=d.get("wifi") or {},
+                       link=d.get("link") or [], ble=d.get("ble") or {})
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError):
         return None
 
 def read_frames(path: Path):

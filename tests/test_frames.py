@@ -21,3 +21,18 @@ def test_read_skips_corrupt_lines(tmp_path):
         fh.write("{corrupt\n")
     append_frame(p, RFFrame(ts=2.0, wifi={}, link=[], ble={}))
     assert [f.ts for f in read_frames(p)] == [1.0, 2.0]
+
+def test_read_skips_valid_json_non_dict_lines(tmp_path):
+    p = tmp_path / "frames.jsonl"
+    append_frame(p, RFFrame(ts=1.0, wifi={}, link=[], ble={}))
+    with open(p, "a") as fh:
+        fh.write("42\n"); fh.write("null\n"); fh.write("[]\n"); fh.write('"hello"\n'); fh.write("true\n")
+    append_frame(p, RFFrame(ts=2.0, wifi={}, link=[], ble={}))
+    assert [f.ts for f in read_frames(p)] == [1.0, 2.0]
+
+def test_read_normalizes_null_fields(tmp_path):
+    p = tmp_path / "frames.jsonl"
+    with open(p, "w") as fh:
+        fh.write('{"ts": 5.0, "wifi": null, "link": null, "ble": null}\n')
+    out = read_frames(p)
+    assert out[0].wifi == {} and out[0].link == [] and out[0].ble == {}
