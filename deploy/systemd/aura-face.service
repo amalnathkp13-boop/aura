@@ -1,0 +1,14 @@
+[Unit]
+Description=Aura Face Dashboard
+After=network-online.target
+
+[Service]
+ExecStart=/home/arduino/aura-src/.venv/bin/python -m aura.cli run-face
+Restart=always
+RestartSec=3
+User=root
+Environment=AURA_HOME=/root/.aura
+WorkingDirectory=/home/arduino/aura-src
+
+[Install]
+WantedBy=multi-user.target
