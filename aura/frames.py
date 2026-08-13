@@ -36,21 +36,26 @@ def read_frames(path: Path):
             out.append(f)
     return out
 
-def tail_frames(path: Path, poll_s: float = 0.25):
-    pos = 0
+def tail_frames(path: Path, poll_s: float = 0.25, from_end: bool = False, stop_event=None):
+    p = Path(path)
+    pos = p.stat().st_size if (from_end and p.exists()) else 0
     while True:
         p = Path(path)
         if p.exists():
+            if pos > p.stat().st_size:
+                pos = 0  # file rotated/truncated underneath us
             with open(p, "r", encoding="utf-8") as fh:
                 fh.seek(pos)
                 while True:
                     line = fh.readline()
-                    if not line:
-                        break
-                    if not line.endswith("\n"):
-                        break
+                    if not line or not line.endswith("\n"):
+                        break  # EOF or partial write in progress -> re-read next poll
                     pos = fh.tell()
                     f = _parse(line)
                     if f:
                         yield f
-        time.sleep(poll_s)
+        if stop_event is not None:
+            if stop_event.wait(poll_s):
+                return
+        else:
+            time.sleep(poll_s)

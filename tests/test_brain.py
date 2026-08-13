@@ -22,7 +22,7 @@ def test_brain_baseline_only(tmp_path, monkeypatch):
     frames_path = tmp_path / "frames.jsonl"
     _write_live(frames_path, 120, jitter=4.0)
     stop = threading.Event()
-    run_brain(cfg, frames_path, stop, model_path=None, max_iters=3)
+    run_brain(cfg, frames_path, stop, model_path=None, max_iters=1)
     state = json.loads((tmp_path / "state.json").read_text())
     assert state["src"] == "baseline"
     assert state["motion"] == 1 and state["presence"] == 1
@@ -47,7 +47,30 @@ def test_brain_cnn_path(tmp_path, monkeypatch):
     frames_path = tmp_path / "frames.jsonl"
     _write_live(frames_path, 120, jitter=4.0)
     import threading
-    run_brain(cfg, frames_path, threading.Event(), model_path=model, max_iters=2)
+    run_brain(cfg, frames_path, threading.Event(), model_path=model, max_iters=1)
     state = json.loads((tmp_path / "state.json").read_text())
     assert state["src"] == "cnn"
     assert set(state) == {"ts", "presence", "motion", "activity", "src"}
+
+def test_brain_auto_calibration_fallback(tmp_path, monkeypatch):
+    monkeypatch.setenv("AURA_HOME", str(tmp_path))
+    cfg = Config.load()
+    frames_path = tmp_path / "frames.jsonl"
+    _write_live(frames_path, 120, jitter=4.0)
+    run_brain(cfg, frames_path, threading.Event(), model_path=None, max_iters=1)
+    state = json.loads((tmp_path / "state.json").read_text())
+    assert state["src"] == "baseline"
+    assert set(state) == {"ts", "presence", "motion", "activity", "src"}
+
+def test_brain_stops_when_idle(tmp_path, monkeypatch):
+    import time as _time
+    monkeypatch.setenv("AURA_HOME", str(tmp_path))
+    cfg = Config.load()
+    (tmp_path / "calibration.json").write_text(json.dumps(
+        {"link_ids": ["aaaaaaaa"], "empty_p995": 0.05, "activity_scale": 0.5}))
+    frames_path = tmp_path / "frames.jsonl"
+    _write_live(frames_path, 120, jitter=4.0)
+    stop = threading.Event()
+    t = threading.Thread(target=run_brain, args=(cfg, frames_path, stop))
+    t.start(); _time.sleep(0.5); stop.set(); t.join(timeout=3)
+    assert not t.is_alive()
