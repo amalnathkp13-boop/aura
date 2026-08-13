@@ -9,7 +9,7 @@ section { padding: 1rem 1.5rem; }
 .card .k { font-size: .7rem; text-transform: uppercase; color: #6b7690; }
 .card .v { font-size: 1.6rem; font-weight: 700; }
 body.present .card .v { color: #7affc4; }
-canvas { width: 100%; max-width: 720px; border-radius: 8px; }
+canvas { width: 100%; max-width: 720px; border-radius: 8px; image-rendering: pixelated; image-rendering: crisp-edges; }
 .wf-legend { display: flex; align-items: center; gap: .5rem; max-width: 720px; margin-bottom: .4rem; font-size: .7rem; color: #6b7690; }
 .wf-legend-bar { flex: 0 0 120px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #0a1a3c 0%, #19b8d8 50%, #ffd83c 100%); }
 .how { max-width: 720px; margin-top: .6rem; font-size: .8rem; color: #9aa4bd; }

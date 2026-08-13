@@ -136,7 +136,7 @@ function drawWaterfall(rows) {
 const SPEC_GUTTER = 58;    // left frequency-label gutter, px
 const SPEC_RIGHT = 92;     // right band-annotation gutter, px
 const SPEC_TIMEBAND = 18;  // bottom time-axis band, px
-const SPEC_VMAX = 4.0;     // color scale ceiling for mean |rfft| magnitude
+const SPEC_TOPPAD = 10;    // top padding, px - keeps the "2.0" tick label from clipping the canvas edge
 const SPEC_FS_MAX = 2.0;   // Hz - Nyquist for 60 samples / 15 s window (cfg.window_seconds)
 const SPEC_COLS = 120;     // matches /api/waterfall?n=120
 
@@ -157,11 +157,11 @@ function drawSpectrogram(rows) {
 
   const plotX = SPEC_GUTTER;
   const plotW = cv.width - SPEC_GUTTER - SPEC_RIGHT;
-  const plotH = cv.height - SPEC_TIMEBAND;
+  const plotH = cv.height - SPEC_TIMEBAND - SPEC_TOPPAD;
 
   // Plot area background (navy, i.e. t=0) so windows with no motion still read as "calm".
   ctx.fillStyle = wfColor(0);
-  ctx.fillRect(plotX, 0, plotW, plotH);
+  ctx.fillRect(plotX, SPEC_TOPPAD, plotW, plotH);
 
   let bins = 0;
   if (specRows.length) {
@@ -172,6 +172,28 @@ function drawSpectrogram(rows) {
       specOffCtx = specOff.getContext('2d');
       specOffBins = bins;
     }
+
+    // Per-row (per-frequency-bin) 95th-percentile normalization over the visible
+    // 120-column window. Raw |rfft| magnitude has a 1/f tilt, so low bins always
+    // dominate under one global scale and flatten contrast everywhere else. Scaling
+    // each row against its OWN recent p95 instead makes every band show temporal
+    // CHANGE: a walking burst pops out, a quiet floor goes dark, and a steady fan
+    // line still reads as a steady stripe. Cheap: 30 rows x 120 values, redone every
+    // redraw.
+    const rowP95 = new Array(bins).fill(1e-6);
+    for (let i = 0; i < bins; i++) {
+      const vals = [];
+      for (let x = 0; x < rows.length && x < SPEC_COLS; x++) {
+        const spec = rows[x].spectrum;
+        if (spec && i < spec.length) vals.push(spec[i]);
+      }
+      if (vals.length) {
+        vals.sort((a, b) => a - b);
+        const p95 = vals[Math.min(vals.length - 1, Math.floor(0.95 * vals.length))];
+        rowP95[i] = Math.max(p95, 1e-6);
+      }
+    }
+
     const img = specOffCtx.createImageData(SPEC_COLS, bins);
     const data = img.data;
     const [bgR, bgG, bgB] = wfColorRGB(0);
@@ -185,7 +207,7 @@ function drawSpectrogram(rows) {
       if (!spec) return; // old row without a spectrum - graceful skip
       spec.forEach((v, i) => {
         if (i >= bins) return;
-        const t = Math.min(1, Math.sqrt(v / SPEC_VMAX));
+        const t = Math.min(1, Math.sqrt(v / (1.4 * rowP95[i])));
         const [cr, cg, cb] = wfColorRGB(t);
         const row = bins - 1 - i; // bin 0 (lowest freq) at the bottom
         const o = (row * SPEC_COLS + x) * 4;
@@ -194,12 +216,12 @@ function drawSpectrogram(rows) {
     });
     specOffCtx.putImageData(img, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(specOff, plotX, 0, plotW, plotH);
+    ctx.drawImage(specOff, plotX, SPEC_TOPPAD, plotW, plotH);
   }
 
   // Walking-band highlight: 0.5-2.0 Hz, i.e. the top 75% of the 0-2.0 Hz (Nyquist) axis.
-  const bandTopY = 0;                                    // 2.0 Hz
-  const bandBottomY = plotH * (1 - 0.5 / SPEC_FS_MAX);    // 0.5 Hz
+  const bandTopY = SPEC_TOPPAD;                                    // 2.0 Hz
+  const bandBottomY = SPEC_TOPPAD + plotH * (1 - 0.5 / SPEC_FS_MAX); // 0.5 Hz
 
   // Subtle dashed guide line at the band's 0.5 Hz floor.
   ctx.strokeStyle = 'rgba(255,255,255,0.18)';
@@ -235,7 +257,7 @@ function drawSpectrogram(rows) {
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
   [0.5, 1.0, 1.5, 2.0].forEach(f => {
-    const y = plotH * (1 - f / SPEC_FS_MAX);
+    const y = SPEC_TOPPAD + plotH * (1 - f / SPEC_FS_MAX);
     ctx.fillStyle = '#6b7690';
     ctx.fillText(f.toFixed(1), plotX - 6, y);
     ctx.strokeStyle = '#2a3550';
