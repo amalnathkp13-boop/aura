@@ -14,6 +14,7 @@ Ground truth comes from (a) the PC webcam labeler (`aura.labeler`) during attend
 - 2026-08-13 ~14:20 IST onward: user in room; overnight 13→14 Aug = OCCUPIED, sleeping (person=1, motion≈0). NOT empty-room data.
 - Empty windows expected during college hours — user to declare departure/return times daily.
 - 2026-08-13 **14:40 IST: user declared "leaving now"** → room EMPTY from ~14:40 until user returns (phone/hotspot/camera stayed home). Labeler had silently stalled 14:19–14:45 (hung socket); labeler rewritten (direct MJPEG parser + socket timeouts). Camera labels absent while DroidCam's stale session holds the single client slot (frees on phone-side timeout or when user returns); declaration covers the window.
+- 2026-08-13 **~15:15 IST: empty window CLOSED** (user back and interacting with the dashboard by ~15:40; conservative close at 15:15). Net clean EMPTY data: 14:40–15:00. 15:15 onward = OCCUPIED (user home, active).
 - 2026-08-13 **~14:57–15:05 IST: POWER-CUT DRILL** (deliberate board reboot). EXCLUDE this window from training (reboot RF churn, brief recording gap). Result: 4 services + clock + recording auto-recovered; matrix app did NOT (status failed) → fixed with aura-matrix-boot.service (delayed retry at boot) + manual restart. Baseline (auto-default thresholds) showed presence=1 during empty-room drill churn — expected; CNN + real calibration replace it.
 - Rig stays at home for the whole campaign; classroom deployment reserved for post-submission demo via on-site calibration.
 
