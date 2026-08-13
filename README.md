@@ -1,3 +1,3 @@
 # Aura
 
-Aura is an Arduino UNO-based RF-sensing system for real-time gesture recognition and proximity detection, using ONNX on-device inference for low-latency local processing. See docs/superpowers/specs/ for design.
+Every Arduino UNO Q already contains an invisible motion sensor — its own radio. Aura turns it on with pure software and AI: privacy-first presence, intrusion, and wellness sensing with zero extra hardware and zero cameras. See docs/superpowers/specs/ for design.

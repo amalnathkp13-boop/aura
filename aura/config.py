@@ -1,6 +1,7 @@
 import json, os, secrets
 from dataclasses import dataclass, fields
 from pathlib import Path
+from typing import Optional
 
 @dataclass
 class Config:
@@ -16,7 +17,7 @@ class Config:
     gateway_ip: str = ""
 
     @classmethod
-    def load(cls, path: Path = None) -> "Config":
+    def load(cls, path: Optional[Path] = None) -> "Config":
         home = Path(os.environ.get("AURA_HOME", Path.home() / ".aura"))
         home.mkdir(parents=True, exist_ok=True)
         salt_file = home / "salt"
@@ -26,6 +27,6 @@ class Config:
         cfg_file = path or (home / "config.json")
         if cfg_file.exists():
             overrides = json.loads(cfg_file.read_text())
-        known = {f.name for f in fields(cls)}
+        known = {f.name for f in fields(cls)} - {"aura_home", "salt"}
         overrides = {k: v for k, v in overrides.items() if k in known}
         return cls(aura_home=home, salt=salt_file.read_text().strip(), **overrides)
