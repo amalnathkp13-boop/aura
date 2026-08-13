@@ -7,7 +7,7 @@ ExecStart=/home/arduino/aura-src/.venv/bin/python -m aura.cli run-ear
 Restart=always
 RestartSec=3
 User=root
-Environment=AURA_HOME=/root/.aura
+Environment=AURA_HOME=/home/arduino/.aura
 WorkingDirectory=/home/arduino/aura-src
 
 [Install]
