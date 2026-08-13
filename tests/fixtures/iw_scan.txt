@@ -1,0 +1,12 @@
+BSS aa:bb:cc:dd:ee:01(on wlan0)
+	TSF: 12345 usec
+	freq: 2437
+	signal: -58.00 dBm
+	SSID: HomeNet
+BSS aa:bb:cc:dd:ee:02(on wlan0) -- associated
+	freq: 5180
+	signal: -71.50 dBm
+	SSID: Neighbor5G
+BSS aa:bb:cc:dd:ee:03(on wlan0)
+	freq: 2412
+	SSID: NoSignalAP

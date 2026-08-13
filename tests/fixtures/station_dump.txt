@@ -1,0 +1,6 @@
+Station 11:22:33:44:55:66 (on wlan0)
+	inactive time:	10 ms
+	rx bytes:	123456
+	signal:  	-54 [-54, -60] dBm
+	signal avg:	-55 dBm
+	tx bitrate:	433.3 MBit/s
