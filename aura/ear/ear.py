@@ -43,6 +43,7 @@ def replay(session_path: Path, out_path: Path, speed: float = 1.0):
         if delay > 0:
             time.sleep(delay)
         append_frame(out_path, RFFrame(ts=time.time(), wifi=f.wifi, link=f.link, ble=f.ble))
+        _rotate(out_path)
 
 # ---- real pollers (board-only; no unit tests — exercised by `aura record` on the board) ----
 
@@ -50,6 +51,7 @@ class _SubprocessPoller(threading.Thread):
     def __init__(self):
         super().__init__(daemon=True)
         self._latest, self._stop = None, threading.Event()
+        self._proc = None
     def latest(self): return self._latest
     def stop(self): self._stop.set()
 
@@ -89,19 +91,33 @@ class LinkPoller(_SubprocessPoller):
         super().stop()
         if self._ping:
             self._ping.terminate()
+            try:
+                self._ping.wait(timeout=2)
+            except Exception:
+                pass
 
 class BlePoller(_SubprocessPoller):
     def run(self):
         try:
-            proc = subprocess.Popen(["bluetoothctl", "scan", "on"], stdout=subprocess.PIPE, text=True)
+            self._proc = subprocess.Popen(["bluetoothctl", "scan", "on"], stdout=subprocess.PIPE, text=True)
         except FileNotFoundError:
             return
         devices = {}
-        for line in proc.stdout:
-            if self._stop.is_set():
-                break
-            hit = parse_bluetoothctl_line(line)
-            if hit:
-                devices[hit[0]] = hit[1]
-                self._latest = dict(devices)
-        proc.terminate()
+        try:
+            for line in self._proc.stdout:
+                if self._stop.is_set():
+                    break
+                hit = parse_bluetoothctl_line(line)
+                if hit:
+                    devices[hit[0]] = hit[1]
+                    self._latest = dict(devices)
+        except Exception:
+            pass
+        finally:
+            self._proc.terminate()
+
+    def stop(self):
+        super().stop()
+        proc = getattr(self, "_proc", None)
+        if proc:
+            proc.terminate()
