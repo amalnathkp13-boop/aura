@@ -35,3 +35,16 @@ def test_summary_separates_still_from_moving():
     moving = summary(build_matrix(_frames(60, 4.0, seed=1), ["aaaaaaaa", "bbbbbbbb"]))
     assert moving["motion_energy"] > 2 * still["motion_energy"]
     assert 0 <= still["band_energy"] <= 1
+
+def test_xcorr_ignores_dead_channels():
+    rng = np.random.default_rng(3)
+    sig = rng.normal(0, 1, 60)
+    m = np.stack([sig, sig, np.zeros(60)]).astype(np.float32)
+    s = summary(m)
+    assert s["xcorr"] > 0.9  # two identical live channels; dead row must not zero the metric
+
+def test_band_energy_high_for_in_band_tone():
+    t = np.arange(60) / 4.0  # fs = 4 Hz
+    tone = np.sin(2 * np.pi * 1.0 * t)  # 1 Hz, inside 0.5-2.0 Hz effective band
+    m = np.stack([tone, tone]).astype(np.float32)
+    assert summary(m)["band_energy"] > 0.8

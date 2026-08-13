@@ -27,6 +27,7 @@ def _norm(x, out_len):
         return np.zeros(out_len, dtype=np.float32)
     idx = np.arange(len(x), dtype=np.float64)
     good = ~np.isnan(x)
+    # leading gap before a link's first appearance is back-filled by interp's boundary clamp (nothing exists to forward-fill from).
     x = np.interp(idx, idx[good], x[good])
     x = np.interp(np.linspace(0, len(x) - 1, out_len), idx, x)
     x = (x - np.median(x)) / 5.0
@@ -43,14 +44,18 @@ def summary(matrix, window_seconds: float = 15.0):
     fs = matrix.shape[1] / window_seconds
     freqs = np.fft.rfftfreq(matrix.shape[1], d=1.0 / fs)
     power = np.abs(np.fft.rfft(matrix, axis=1)) ** 2
+    # NOTE: at 60 samples / 15 s (fs=4 Hz) the Nyquist limit is 2.0 Hz, so the effective band is 0.5-2.0 Hz; the <=3.0 bound only matters if out_len/window ever changes.
     band = (freqs >= 0.5) & (freqs <= 3.0)
     total = power[:, 1:].sum(axis=1)
     with np.errstate(invalid="ignore", divide="ignore"):
         frac = np.where(total > 0, power[:, band].sum(axis=1) / total, 0.0)
     band_energy = float(np.mean(frac))
     var = np.var(diffs, axis=1)
-    top = diffs[np.argsort(var)[-5:]]
-    if top.shape[0] >= 2 and np.all(np.std(top, axis=1) > 0):
+    # ranked by variance of the first-differences (fluctuation energy), not raw channel variance - xcorr measures correlated *disturbances*.
+    live = np.where(var > 0)[0]
+    order = live[np.argsort(var[live])][-5:]
+    top = diffs[order]
+    if top.shape[0] >= 2:
         c = np.corrcoef(top)
         xcorr = float(np.mean(np.abs(c[np.triu_indices_from(c, 1)])))
     else:
