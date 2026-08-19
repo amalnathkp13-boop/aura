@@ -20,6 +20,8 @@ Ground truth comes from (a) the PC webcam labeler (`aura.labeler`) during attend
 
 **Appliance ground truth:** ceiling fan runs at night while sleeping (user-declared 2026-08-13) → overnight occupied data = fan ON. Needed for contrast: several hours of **fan ON + room EMPTY** (user to leave fan on when departing some day-windows) so the model learns fan ≠ person. Log fan state with each declared window.
 
+**2026-08-20 (IST) network event + detector upgrade:** phone hotspot randomized its subnet (192.168.63.0/24 → 192.168.248.0/24); board now at 192.168.248.60 (use `arduino@xfiles.local`). Until the fix, the board's `gateway_ip` pointed at the dead old gateway → the link-RSSI stream (8-samples/frame channel) was degraded/absent for an UNKNOWN window ending **2026-08-19 19:40:36 UTC** (= 2026-08-20 01:10:36 IST), when config was corrected and aura-ear + aura-brain restarted. Treat frames in that window as scan-only (WiFi channels valid, link channel suspect). Same restart deployed the **RuView detector** (state.json `src: "ruview"`); board is UNCALIBRATED (no calibration.json) → auto-default thresholds until "Learn my room" is run per docs/validation-protocol.md.
+
 Open items:
 - [x] Board placement: user's bedroom, stays powered (2026-08-13)
 - [x] Labeler camera: DroidCam via direct MJPEG parser (2026-08-13)
