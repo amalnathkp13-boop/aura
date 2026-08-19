@@ -23,7 +23,7 @@ def test_validate_metrics_on_synthetic_session():
     assert m["empty_motion_false_windows"] <= 1
     assert m["entry_latency_s"] is not None and m["entry_latency_s"] <= 30
 
-def test_validate_skips_windows_straddling_segments():
+def test_validate_skips_windows_not_fully_inside_a_segment():
     frames = _mk(0, 120, 0.05)
     timeline = [{"t0": 0, "t1": 10, "truth": "empty"}]        # only 10 s covered
     m = validate(frames, timeline)
@@ -33,4 +33,23 @@ def test_validate_empty_frames_returns_zero_metrics():
     m = validate([], [{"t0": 0, "t1": 60, "truth": "empty"}])
     assert m == {"windows": 0, "presence_acc": None, "n_presence": 0,
                  "motion_acc": None, "n_motion": 0,
-                 "empty_motion_false_windows": 0, "entry_latency_s": None}
+                 "empty_motion_false_windows": 0, "entry_latency_s": None,
+                 "entries_missed": 0, "empty_hours": 0.0}
+
+def test_validate_baseline_detector_mode():
+    frames = _mk(0, 240, 0.05) + _mk(60, 240, 4.0, seed=1)   # 60 s empty, 60 s walking
+    timeline = [{"t0": 0, "t1": 60, "truth": "empty"},
+                {"t0": 60, "t1": 120, "truth": "walking"}]
+    m = validate(frames, timeline, detector="baseline")
+    assert m["windows"] > 0
+    assert m["presence_acc"] is not None and m["presence_acc"] >= 0.8
+    assert m["motion_acc"] >= 0.8
+
+def test_validate_missed_entry_counted_not_borrowed():
+    frames = _mk(0, 240, 0.05) + _mk(60, 240, 0.05, seed=1) + _mk(120, 240, 4.0, seed=2)
+    timeline = [{"t0": 0, "t1": 60, "truth": "empty"},
+                {"t0": 60, "t1": 120, "truth": "present"},
+                {"t0": 120, "t1": 180, "truth": "walking"}]
+    m = validate(frames, timeline)
+    assert m["entries_missed"] == 1
+    assert m["entry_latency_s"] is None

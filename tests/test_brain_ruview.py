@@ -45,3 +45,15 @@ def test_detector_cnn_without_model_falls_back_to_ruview(tmp_path, monkeypatch):
     _write_live(frames_path, 120, jitter=4.0)
     run_brain(cfg, frames_path, threading.Event(), model_path=None, max_iters=1)
     assert json.loads((tmp_path / "state.json").read_text())["src"] == "ruview"
+
+def test_stale_calibration_warns(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("AURA_HOME", str(tmp_path))
+    (tmp_path / "calibration.json").write_text(
+        json.dumps({"link_ids": ["aaaaaaaa"], "empty_p995": 0.05, "activity_scale": 0.5}))
+    cfg = Config.load()
+    frames_path = tmp_path / "frames.jsonl"
+    _write_live(frames_path, 120, jitter=4.0)
+    run_brain(cfg, frames_path, threading.Event(), model_path=None, max_iters=1)
+    assert "re-run Learn my room" in capsys.readouterr().out
+    state = json.loads((tmp_path / "state.json").read_text())
+    assert state["src"] == "ruview"

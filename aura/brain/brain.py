@@ -39,6 +39,8 @@ def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_i
         model_channels = dim1 if isinstance(dim1, int) else None
     cal = _load_cal(cfg.aura_home)
     auto_mode = cal is None
+    if cal is not None and cfg.detector != "baseline" and "rv" not in cal:
+        print("calibration.json predates ruview thresholds - re-run Learn my room; using defaults", flush=True)
     baseline = None
     rvdet = RuViewDetector(cal)   # tolerates cal=None (upstream default thresholds)
     window = deque(maxlen=int(cfg.window_seconds * cfg.frame_hz * 2))
