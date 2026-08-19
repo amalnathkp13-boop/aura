@@ -26,6 +26,10 @@ def _truth_at(timeline, t_start, t_end):
 
 
 def validate(frames, timeline, cal=None, win_s=15.0, step_s=5.0, top_k=16):
+    if not frames:
+        return {"windows": 0, "presence_acc": None, "n_presence": 0,
+                "motion_acc": None, "n_motion": 0,
+                "empty_motion_false_windows": 0, "entry_latency_s": None}
     det = RuViewDetector(cal)
     link_ids = (cal or {}).get("link_ids") or select_links(frames, top_k)
     rows = []

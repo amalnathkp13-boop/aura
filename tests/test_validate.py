@@ -28,3 +28,9 @@ def test_validate_skips_windows_straddling_segments():
     timeline = [{"t0": 0, "t1": 10, "truth": "empty"}]        # only 10 s covered
     m = validate(frames, timeline)
     assert m["windows"] == 0                                   # no window fits inside
+
+def test_validate_empty_frames_returns_zero_metrics():
+    m = validate([], [{"t0": 0, "t1": 60, "truth": "empty"}])
+    assert m == {"windows": 0, "presence_acc": None, "n_presence": 0,
+                 "motion_acc": None, "n_motion": 0,
+                 "empty_motion_false_windows": 0, "entry_latency_s": None}
