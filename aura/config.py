@@ -11,6 +11,7 @@ class Config:
     scan_interval: float = 3.0
     top_k: int = 16
     window_seconds: float = 15.0
+    detector: str = "ruview"          # ruview | baseline | cnn
     telegram_token: str = ""
     telegram_chat_id: str = ""
     serial_port: str = ""

@@ -16,6 +16,7 @@ def _write_live(path, n, jitter, seed=0):
 
 def test_brain_baseline_only(tmp_path, monkeypatch):
     monkeypatch.setenv("AURA_HOME", str(tmp_path))
+    (tmp_path / "config.json").write_text('{"detector": "baseline"}')
     cfg = Config.load()
     (tmp_path / "calibration.json").write_text(json.dumps(
         {"link_ids": ["aaaaaaaa"], "empty_p995": 0.05, "activity_scale": 0.5}))
@@ -37,6 +38,7 @@ def test_brain_cnn_path(tmp_path, monkeypatch):
     from training.dataset import build_dataset
     from training.train import train
     monkeypatch.setenv("AURA_HOME", str(tmp_path))
+    (tmp_path / "config.json").write_text('{"detector": "cnn"}')
     cfg = Config.load()
     (tmp_path / "calibration.json").write_text(json.dumps(
         {"link_ids": ["aaaaaaaa"], "empty_p995": 0.05, "activity_scale": 0.5}))
@@ -57,6 +59,7 @@ def test_brain_cnn_path(tmp_path, monkeypatch):
 
 def test_brain_auto_calibration_fallback(tmp_path, monkeypatch):
     monkeypatch.setenv("AURA_HOME", str(tmp_path))
+    (tmp_path / "config.json").write_text('{"detector": "baseline"}')
     cfg = Config.load()
     frames_path = tmp_path / "frames.jsonl"
     _write_live(frames_path, 120, jitter=4.0)

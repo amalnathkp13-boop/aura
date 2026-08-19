@@ -5,6 +5,7 @@ import numpy as np
 from aura.frames import read_frames, tail_frames
 from aura.brain.features import select_links, build_matrix, summary
 from aura.brain.baseline import Baseline
+from aura.brain.ruview.detector import RuViewDetector
 
 def _atomic_write(path: Path, obj: dict):
     tmp = path.with_suffix(".tmp")
@@ -30,7 +31,7 @@ AUTO_ACTIVITY_SCALE = 0.5
 def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_iters=None):
     sess = None
     model_channels = None
-    if model_path and Path(model_path).exists():
+    if cfg.detector == "cnn" and model_path and Path(model_path).exists():
         import onnxruntime as ort
         sess = ort.InferenceSession(str(model_path))
         shape = sess.get_inputs()[0].shape
@@ -39,6 +40,7 @@ def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_i
     cal = _load_cal(cfg.aura_home)
     auto_mode = cal is None
     baseline = None
+    rvdet = RuViewDetector(cal)   # tolerates cal=None (upstream default thresholds)
     window = deque(maxlen=int(cfg.window_seconds * cfg.frame_hz * 2))
     for f in read_frames(frames_path)[-window.maxlen:]:
         window.append(f)
@@ -78,6 +80,10 @@ def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_i
             state = {"presence": int(_sig(lp[0]) > 0.5), "motion": int(_sig(lm[0]) > 0.5),
                      "activity": round(max(0.0, min(100.0, float(la[0]))), 1)}
             src = "cnn"
+        elif cfg.detector != "baseline":
+            rv = rvdet.update(w, link_ids, ts=now, frame_hz=cfg.frame_hz)
+            if rv is not None:   # None (no usable channels) -> keep baseline state
+                state, src = rv, "ruview"
         _atomic_write(cfg.aura_home / "state.json", {"ts": now, **state, "src": src})
         with open(cfg.aura_home / "features.jsonl", "a", encoding="utf-8") as fh:
             chans = np.std(np.diff(m, axis=1), axis=1).round(4).tolist()
