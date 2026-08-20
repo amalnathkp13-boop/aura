@@ -18,3 +18,31 @@ canvas { width: 100%; max-width: 720px; border-radius: 8px; image-rendering: pix
 button { background: #1a2340; color: #dce3f0; border: 1px solid #2a3550; border-radius: 8px; padding: .5rem 1rem; margin-right: .5rem; cursor: pointer; }
 button:hover { border-color: #7ac7ff; }
 ul { margin: 0; padding-left: 1.2rem; color: #ffb37a; }
+.k { font-size: .7rem; text-transform: uppercase; color: #6b7690; }
+#rv-console { border-top: 1px solid #1c2333; border-bottom: 1px solid #1c2333; }
+.rv-note { font-size: .65rem; color: #6b7690; font-weight: 400; letter-spacing: 0; }
+h2 .rv-note { margin-left: .6rem; }
+.rv-top { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start; }
+.rv-statebox { background: #121826; border: 1px solid #1c2333; border-radius: 10px; padding: 1rem 1.5rem; min-width: 16rem; }
+.rv-state { font-size: 1.5rem; font-weight: 800; letter-spacing: .1em; margin: .2rem 0 .8rem; color: #6b7690; }
+.rv-state.present_still { color: #ffd83c; }
+.rv-state.active { color: #7affc4; }
+#rv-gauge { width: 150px; image-rendering: auto; }
+.rv-meters { margin-top: .8rem; display: flex; flex-direction: column; gap: .6rem; max-width: 280px; }
+.rv-bar { height: 10px; border-radius: 5px; background: #0a1a3c; overflow: hidden; margin-top: .2rem; }
+.rv-bar div { height: 100%; width: 0; background: linear-gradient(90deg, #19b8d8, #ffd83c); transition: width .4s; }
+.rv-radarwrap { text-align: center; }
+#rv-radar { width: 260px; border-radius: 50%; background: #0a1020; image-rendering: auto; }
+#rv-links { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1rem; }
+.rv-linkcard { background: #121826; border: 1px solid #1c2333; border-radius: 10px; padding: .6rem .9rem; font-size: .75rem; min-width: 13rem; }
+.rv-linkcard .id { font-family: monospace; color: #7ac7ff; }
+.rv-linkcard .rssi { color: #9aa4bd; margin-left: .4rem; }
+.rv-vote { float: right; font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 6px; text-transform: uppercase; }
+.rv-vote.absent { background: #1c2333; color: #6b7690; }
+.rv-vote.present_still { background: #3d3416; color: #ffd83c; }
+.rv-vote.active { background: #123d2c; color: #7affc4; }
+.rv-minibar { height: 6px; border-radius: 3px; background: #0a1a3c; margin: .15rem 0 .4rem; position: relative; }
+.rv-minibar .fill { height: 100%; border-radius: 3px; background: #19b8d8; }
+.rv-minibar .th { position: absolute; top: -2px; bottom: -2px; width: 2px; background: #ffd83c; }
+.rv-tickerhead { margin-top: 1rem; }
+#rv-ticker { color: #9aa4bd; font-size: .75rem; max-width: 720px; list-style: none; padding-left: 0; }

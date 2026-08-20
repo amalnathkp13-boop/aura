@@ -47,6 +47,7 @@ class RuViewDetector:
         self.act_ceil = rv.get("act_ceil", AUTO_ACT_CEIL)
         self._extractor = RssiFeatureExtractor()
         self._last_motion_ts = None
+        self.last_detail = None   # per-channel breakdown of the latest update (for the dashboard)
 
     def update(self, frames, link_ids, ts, frame_hz=4.0):
         if len(frames) >= 2 and frames[-1].ts > frames[0].ts:
@@ -63,15 +64,16 @@ class RuViewDetector:
             clf = PresenceClassifier(
                 presence_variance_threshold=self.var_thresh.get(lid, AUTO_VAR_THRESH),
                 motion_energy_threshold=self.motion_thresh.get(lid, AUTO_MOTION_THRESH))
-            channels.append((clf, feats))
+            channels.append((lid, clf, feats, float(series[-1])))
             weights.append(w)
         if not channels:
+            self.last_detail = None
             return None
 
-        prelim = [clf.classify(feats) for clf, feats in channels]
+        prelim = [clf.classify(feats) for _, clf, feats, _ in channels]
         sensing = [clf.classify(feats,
                                 other_receiver_results=[r for j, r in enumerate(prelim) if j != i])
-                   for i, (clf, feats) in enumerate(channels)]
+                   for i, (_, clf, feats, _) in enumerate(channels)]
 
         wsum = float(sum(weights))
         present_frac = sum(w for w, r in zip(weights, sensing) if r.presence_detected) / wsum
@@ -86,6 +88,23 @@ class RuViewDetector:
 
         fused_mbp = sum(w * r.motion_band_energy for w, r in zip(weights, sensing)) / wsum
         confidence = sum(w * r.confidence for w, r in zip(weights, sensing)) / wsum
+        self.last_detail = {
+            "links": [{"id": lid, "rssi": round(rssi_last, 1),
+                       "variance": round(r.rssi_variance, 4),
+                       "var_thresh": round(self.var_thresh.get(lid, AUTO_VAR_THRESH), 4),
+                       "band_energy": round(r.motion_band_energy, 4),
+                       "motion_thresh": round(self.motion_thresh.get(lid, AUTO_MOTION_THRESH), 4),
+                       "vote": r.motion_level.value,
+                       "confidence": round(r.confidence, 3),
+                       "weight": round(w, 3),
+                       "change_points": feats.n_change_points}
+                      for (lid, _, feats, rssi_last), r, w in zip(channels, sensing, weights)],
+            "present_frac": round(present_frac, 3),
+            "active_frac": round(active_frac, 3),
+            "fused_band_energy": round(fused_mbp, 4),
+            "fused_breathing_energy": round(
+                sum(w * r.breathing_band_energy for w, r in zip(weights, sensing)) / wsum, 4),
+        }
         return {"presence": presence, "motion": motion,
                 "activity": round(self._activity(fused_mbp), 1),
                 "confidence": round(float(confidence), 3)}

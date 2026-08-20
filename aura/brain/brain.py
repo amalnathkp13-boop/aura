@@ -86,6 +86,8 @@ def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_i
             rv = rvdet.update(w, link_ids, ts=now, frame_hz=cfg.frame_hz)
             if rv is not None:   # None (no usable channels) -> keep baseline state
                 state, src = rv, "ruview"
+                _atomic_write(cfg.aura_home / "ruview.json",
+                              {"ts": now, **rvdet.last_detail, "state": {**state, "src": src}})
         _atomic_write(cfg.aura_home / "state.json", {"ts": now, **state, "src": src})
         with open(cfg.aura_home / "features.jsonl", "a", encoding="utf-8") as fh:
             chans = np.std(np.diff(m, axis=1), axis=1).round(4).tolist()

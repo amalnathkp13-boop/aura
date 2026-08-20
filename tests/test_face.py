@@ -46,6 +46,20 @@ def test_bad_inputs_never_500(tmp_path, monkeypatch):
     (cfg.aura_home / "state.json").write_text("[1,2]")
     assert c.get("/api/state").get_json() == {"src": "none"}
 
+def test_ruview_endpoint_empty_then_value(tmp_path, monkeypatch):
+    cfg, c = _client(tmp_path, monkeypatch)
+    assert c.get("/api/ruview").get_json() == {}
+    (cfg.aura_home / "ruview.json").write_text(json.dumps(
+        {"ts": 1.0, "links": [{"id": "aaaaaaaa", "vote": "active"}],
+         "present_frac": 1.0, "active_frac": 1.0, "fused_band_energy": 2.0,
+         "state": {"presence": 1, "motion": 1, "activity": 80.0,
+                   "confidence": 0.9, "src": "ruview"}}))
+    d = c.get("/api/ruview").get_json()
+    assert d["links"][0]["vote"] == "active" and d["state"]["src"] == "ruview"
+    (cfg.aura_home / "ruview.json").write_text("{corrupt")
+    assert c.get("/api/ruview").get_json() == {}
+
+
 def test_alerts_endpoint(tmp_path, monkeypatch):
     import json as _json
     cfg, c = _client(tmp_path, monkeypatch)

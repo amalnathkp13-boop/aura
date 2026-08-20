@@ -6,6 +6,26 @@
   <div class="card"><div class="k">Motion</div><div class="v" id="motion">–</div></div>
   <div class="card"><div class="k">Activity</div><div class="v" id="activity">–</div></div>
 </section>
+<section id="rv-console"><h2>RuView Console <span class="rv-note">deterministic RF sensing — RuView (MIT) algorithms + Aura multi-link fusion</span></h2>
+  <div class="rv-top">
+    <div class="rv-statebox">
+      <div class="k">Sensing state</div><div id="rv-state" class="rv-state">—</div>
+      <div class="k">Confidence</div><canvas id="rv-gauge" width="150" height="84"></canvas>
+      <div class="rv-meters">
+        <div><span class="k">motion band 0.5–2 Hz</span><div class="rv-bar"><div id="rv-mband"></div></div></div>
+        <div><span class="k">breathing band 0.1–0.5 Hz</span><div class="rv-bar"><div id="rv-bband"></div></div>
+          <span class="rv-note">band energy — not a breathing rate</span></div>
+      </div>
+    </div>
+    <div class="rv-radarwrap"><canvas id="rv-radar" width="260" height="260"></canvas>
+      <div class="rv-note">abstract visualization — not spatial imaging</div></div>
+  </div>
+  <div id="rv-links"></div>
+  <div class="k rv-tickerhead">RF disturbance events (CUSUM change-points)</div><ul id="rv-ticker"></ul>
+  <details class="how"><summary>How to read this</summary>
+    <p>Every WiFi path the board can hear acts as one "receiver". Each receiver card shows its live signal, how disturbed it is (variance vs. its calibrated threshold — yellow tick), the human-motion band energy, and its vote. The fused state needs a weighted majority — one noisy receiver cannot fake a person. The radar blob is an abstract presence indicator: its size tracks activity, it pulses with motion. No positions, poses, or vital signs are measured — RSSI physics cannot provide them.</p>
+  </details>
+</section>
 <section><h2>RF waterfall</h2>
   <div class="wf-legend"><span>calm</span><span class="wf-legend-bar"></span><span>disturbed</span></div>
   <canvas id="waterfall" width="720" height="240"></canvas>

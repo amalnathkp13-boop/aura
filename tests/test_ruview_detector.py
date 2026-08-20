@@ -64,3 +64,19 @@ def test_no_usable_channels_returns_none():
     det = RuViewDetector(None)
     frames = [RFFrame(ts=i / 4.0, wifi={}, link=[], ble={}) for i in range(60)]
     assert det.update(frames, [], ts=15.0) is None
+    assert det.last_detail is None
+
+
+def test_update_populates_last_detail():
+    det = RuViewDetector(None)
+    frames = _frames(60, {"aaaaaaaa": 4.0, "bbbbbbbb": 0.05}, link_jitter=4.0, seed=1)
+    det.update(frames, ["aaaaaaaa", "bbbbbbbb"], ts=15.0)
+    d = det.last_detail
+    assert {l["id"] for l in d["links"]} == {"aaaaaaaa", "bbbbbbbb", LINK_STREAM}
+    for l in d["links"]:
+        assert set(l) == {"id", "rssi", "variance", "var_thresh", "band_energy",
+                          "motion_thresh", "vote", "confidence", "weight", "change_points"}
+        assert l["vote"] in ("absent", "present_still", "active")
+        assert 0.0 <= l["confidence"] <= 1.0
+    assert 0.0 <= d["present_frac"] <= 1.0 and 0.0 <= d["active_frac"] <= 1.0
+    assert d["fused_band_energy"] >= 0.0 and d["fused_breathing_energy"] >= 0.0

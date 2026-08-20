@@ -16,6 +16,9 @@ async function tick() {
     $('srcbadge').textContent = s.src || '';
     document.body.classList.toggle('present', !!s.presence);
 
+    rvState = s;
+    renderRuview(await j('/api/ruview'));
+
     if (tickCount % 2 === 0) {
       const rows = await j('/api/waterfall?n=120');
       drawWaterfall(rows);
@@ -274,6 +277,113 @@ function drawSpectrogram(rows) {
   ctx.textAlign = 'right';
   ctx.fillText('now', plotX + plotW - 2, timeY);
 }
+
+// ---------------- RuView console ----------------
+// All values shown are real detector internals (aura/brain/ruview): per-link
+// votes/thresholds, the fused vote fractions, and CUSUM change-point counts.
+// The radar is deliberately abstract - RSSI carries no position information.
+let rvState = {};          // latest /api/state (for the radar)
+let rvDetail = null;       // latest /api/ruview payload
+let rvLastTs = null;       // dedup: ticker fires once per new inference
+let rvMbandMax = 1e-6, rvBbandMax = 1e-6;  // self-scaling meter ceilings (slow decay)
+
+function renderRuview(d) {
+  rvDetail = (d && d.links) ? d : null;
+  const stateEl = $('rv-state');
+  if (!rvDetail) {
+    stateEl.textContent = '—'; stateEl.className = 'rv-state';
+    $('rv-links').innerHTML = '';
+    return;
+  }
+  const st = d.state || {};
+  const level = st.motion ? 'active' : (st.presence ? 'present_still' : 'absent');
+  stateEl.textContent = { absent: 'ABSENT', present_still: 'PRESENT · STILL', active: 'ACTIVE' }[level];
+  stateEl.className = 'rv-state ' + level;
+  drawGauge(st.confidence ?? 0);
+
+  rvMbandMax = Math.max(d.fused_band_energy, rvMbandMax * 0.995, 1e-6);
+  rvBbandMax = Math.max(d.fused_breathing_energy, rvBbandMax * 0.995, 1e-6);
+  $('rv-mband').style.width = Math.round(100 * Math.min(1, d.fused_band_energy / rvMbandMax)) + '%';
+  $('rv-bband').style.width = Math.round(100 * Math.min(1, d.fused_breathing_energy / rvBbandMax)) + '%';
+
+  $('rv-links').innerHTML = d.links.map(l => {
+    const varFill = Math.min(100, 50 * l.variance / Math.max(l.var_thresh, 1e-9));
+    const bandFill = Math.min(100, 50 * l.band_energy / Math.max(l.motion_thresh, 1e-9));
+    return `<div class="rv-linkcard">
+      <span class="id">${esc(l.id === '__link__' ? 'LINK' : l.id)}</span><span class="rssi">${esc(l.rssi)} dBm</span>
+      <span class="rv-vote ${esc(l.vote)}">${esc(l.vote.replace('_', ' '))}</span>
+      <div class="k">variance ${esc(l.variance)} / thr ${esc(l.var_thresh)}</div>
+      <div class="rv-minibar"><div class="fill" style="width:${varFill}%"></div><div class="th" style="left:50%"></div></div>
+      <div class="k">motion band ${esc(l.band_energy)} / thr ${esc(l.motion_thresh)}</div>
+      <div class="rv-minibar"><div class="fill" style="width:${bandFill}%"></div><div class="th" style="left:50%"></div></div>
+      <div class="k">weight ${esc(l.weight)} · conf ${esc(l.confidence)}</div>
+    </div>`;
+  }).join('');
+
+  if (d.ts !== rvLastTs) {
+    rvLastTs = d.ts;
+    const events = d.links.filter(l => l.change_points > 0);
+    if (events.length) {
+      const t = new Date(d.ts * 1000).toLocaleTimeString();
+      const li = document.createElement('li');
+      li.textContent = `${t} — ` + events.map(l =>
+        `${l.id === '__link__' ? 'LINK' : l.id}: ${l.change_points} change-point${l.change_points > 1 ? 's' : ''}`).join(', ');
+      const ul = $('rv-ticker');
+      ul.insertBefore(li, ul.firstChild);
+      while (ul.children.length > 8) ul.removeChild(ul.lastChild);
+    }
+  }
+}
+
+function drawGauge(conf) {
+  const cv = $('rv-gauge'), ctx = cv.getContext('2d');
+  const cx = cv.width / 2, cy = cv.height - 8, r = 62;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.lineWidth = 10; ctx.lineCap = 'round';
+  ctx.strokeStyle = '#0a1a3c';
+  ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI); ctx.stroke();
+  ctx.strokeStyle = wfColor(conf);
+  ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, Math.PI * (1 + Math.max(0, Math.min(1, conf)))); ctx.stroke();
+  ctx.font = '16px monospace'; ctx.fillStyle = '#dce3f0';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText(Math.round(conf * 100) + '%', cx, cy - 6);
+}
+
+let rvSweep = 0;
+function drawRadar() {
+  const cv = $('rv-radar'), ctx = cv.getContext('2d');
+  const cx = cv.width / 2, cy = cv.height / 2, R = cv.width / 2 - 6;
+  // translucent repaint instead of clear -> the sweep leaves a fading trail
+  ctx.fillStyle = 'rgba(10, 16, 32, 0.18)';
+  ctx.fillRect(0, 0, cv.width, cv.height);
+
+  ctx.strokeStyle = 'rgba(122, 199, 255, 0.15)';
+  ctx.lineWidth = 1;
+  [0.33, 0.66, 1].forEach(f => {
+    ctx.beginPath(); ctx.arc(cx, cy, R * f, 0, 2 * Math.PI); ctx.stroke();
+  });
+
+  rvSweep += 0.02;
+  ctx.strokeStyle = 'rgba(122, 199, 255, 0.8)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + R * Math.cos(rvSweep), cy + R * Math.sin(rvSweep)); ctx.stroke();
+
+  const s = rvState;
+  if (s && s.presence) {
+    const act = Math.max(0, Math.min(100, s.activity ?? 0));
+    const pulse = s.motion ? 1 + 0.12 * Math.sin(performance.now() / 180) : 1;
+    const blobR = (14 + 0.55 * act) * pulse;
+    const col = s.motion ? '122, 255, 196' : '255, 216, 60';
+    const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, blobR);
+    grad.addColorStop(0, `rgba(${col}, 0.85)`);
+    grad.addColorStop(1, `rgba(${col}, 0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, blobR, 0, 2 * Math.PI); ctx.fill();
+  }
+  requestAnimationFrame(drawRadar);
+}
+requestAnimationFrame(drawRadar);
 
 document.querySelectorAll('button[data-mode]').forEach(b =>
   b.onclick = () => j('/api/mode', { method: 'POST', headers: { 'Content-Type': 'application/json' },

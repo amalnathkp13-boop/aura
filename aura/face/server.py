@@ -44,6 +44,15 @@ def create_app(cfg):
             return jsonify({"src": "none"})
         return jsonify(d if isinstance(d, dict) else {"src": "none"})
 
+    @app.get("/api/ruview")
+    def ruview():
+        p = cfg.aura_home / "ruview.json"
+        try:
+            d = json.loads(p.read_text())
+        except Exception:
+            return jsonify({})
+        return jsonify(d if isinstance(d, dict) else {})
+
     @app.get("/api/waterfall")
     def waterfall():
         n = _int_arg("n", 120)

@@ -37,6 +37,18 @@ def test_detector_baseline_pinned(tmp_path, monkeypatch):
     assert state["src"] == "baseline"
     assert set(state) == {"ts", "presence", "motion", "activity", "src"}
 
+def test_brain_writes_ruview_detail(tmp_path, monkeypatch):
+    monkeypatch.setenv("AURA_HOME", str(tmp_path))
+    cfg = Config.load()
+    frames_path = tmp_path / "frames.jsonl"
+    _write_live(frames_path, 120, jitter=4.0)
+    run_brain(cfg, frames_path, threading.Event(), model_path=None, max_iters=1)
+    d = json.loads((tmp_path / "ruview.json").read_text())
+    assert d["state"]["src"] == "ruview"
+    assert len(d["links"]) >= 1 and "vote" in d["links"][0]
+    assert "ts" in d and "present_frac" in d
+
+
 def test_detector_cnn_without_model_falls_back_to_ruview(tmp_path, monkeypatch):
     monkeypatch.setenv("AURA_HOME", str(tmp_path))
     (tmp_path / "config.json").write_text('{"detector": "cnn"}')
