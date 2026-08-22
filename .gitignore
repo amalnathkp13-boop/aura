@@ -6,3 +6,4 @@ data/sessions/
 *.npz
 .pytest_cache/
 aura.egg-info/
+*.pt
