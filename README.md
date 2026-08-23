@@ -105,7 +105,7 @@ both the fused detector and a naive baseline.
 
 ## Tests
 
-97 automated tests cover feature extraction, classification, fusion,
+101 automated tests cover feature extraction, classification, fusion,
 calibration (including the walk gate and drift detection), zones, services,
 and the dashboard API:
 
