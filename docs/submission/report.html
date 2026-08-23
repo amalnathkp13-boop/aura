@@ -427,6 +427,14 @@ collapsible help all render live data; every API endpoint healthy. During
 verification the <b>drift banner was observed firing in production</b> —
 the hotspot had been moved again, and the dashboard was already demanding
 recalibration on its own.</li>
+<li><b>Guardian verified end-to-end:</b> Away mode armed live, a real walk-in
+raised the intrusion alert, and it was delivered to Telegram within seconds
+(3-s sustained-motion trigger, 300-s cooldown).</li>
+<li><b>Zone localization proved itself unprompted:</b> while diagnosing why an
+"empty" room kept re-arming presence, the dashboard's zone label read
+<code>doorway</code> — correctly localizing the operator, who was sitting at a
+laptop just outside the door, inside the sensing zone. The sensor explained
+its own behaviour.</li>
 </ul>
 </section>
 
@@ -498,6 +506,9 @@ banner demands recalibration when geometry changes.</li>
 <li><b>Windowed confirmation:</b> features respond in ~2 s, but confirmed
 presence uses a 15-s analysis window — Aura is a presence system, not a
 millisecond tripwire.</li>
+<li><b>The sensing zone includes the doorway:</b> a person lingering just
+outside the door is legitimately detected and holds presence — correct for
+security, worth knowing when reading the dashboard.</li>
 <li><b>RSSI, not CSI:</b> the UNO Q's radio exposes signal strength, not
 channel state information; Aura therefore claims presence/activity/zones —
 never imaging or pose.</li>

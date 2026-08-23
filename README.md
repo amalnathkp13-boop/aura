@@ -93,7 +93,9 @@ Calibration rules that matter (learned the hard way): the hotspot phone is the
 far end of the sensor — park it at the far side of the room, at waist height,
 and don't touch it afterwards; the walk-phase quality gate refuses a
 calibration that can't actually see you walk, and the drift banner tells you
-when to redo it.
+when to redo it. Note the sensing zone includes the doorway — someone
+lingering just outside the door is legitimately detected (the zone label will
+say so).
 
 ## Validation
 
