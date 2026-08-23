@@ -46,3 +46,6 @@ h2 .rv-note { margin-left: .6rem; }
 .rv-minibar .th { position: absolute; top: -2px; bottom: -2px; width: 2px; background: #ffd83c; }
 .rv-tickerhead { margin-top: 1rem; }
 #rv-ticker { color: #9aa4bd; font-size: .75rem; max-width: 720px; list-style: none; padding-left: 0; }
+
+#calstale { background: #5a2020; color: #ffd9c9; border-bottom: 1px solid #8a3a2a;
+  padding: 7px 14px; text-align: center; font-size: 13px; }

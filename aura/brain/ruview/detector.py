@@ -41,6 +41,9 @@ def raw_series(frames, link_id):
 ZONE_MAX_DIST = 1.5     # log-feature Euclidean ceiling: farther than this from every zone -> no label
 ZONE_MIN_MARGIN = 0.2   # runner-up must be at least this much farther than the winner
 
+DRIFT_DB = 8.0          # link level this far from the calibration-time median = geometry changed
+STALE_AFTER_S = 60.0    # sustained (empty-room) drift for this long -> calibration declared stale
+
 
 class RuViewDetector:
     def __init__(self, cal=None):
@@ -57,6 +60,14 @@ class RuViewDetector:
         self._extractor = RssiFeatureExtractor()
         self._last_motion_ts = None
         self._last_zone = None    # sticky across still periods while presence holds
+        # calibration-time link RSSI median: the anchor for staleness detection
+        # (the hotspot phone moving re-shapes every path and silently blinds the
+        # calibrated thresholds - measured 19 dB on 2026-08-23)
+        self._rssi_base = {lid: s["rssi_med"]
+                           for lid, s in ((cal or {}).get("rv_empty") or {}).items()
+                           if "rssi_med" in s}
+        self._drift_since = None
+        self.cal_stale = False
         self.last_detail = None   # per-channel breakdown of the latest update (for the dashboard)
 
     def _match_zone(self, feats_by_lid):
@@ -98,8 +109,13 @@ class RuViewDetector:
             rate = frame_hz
 
         channels, weights = [], []
+        med_by_lid = {}
         for lid in list(link_ids) + [LINK_STREAM]:
             series, w = raw_series(frames, lid)
+            if len(series):
+                # level median even for dead-flat channels: a flat link parked
+                # 20 dB from its calibrated level is still drift evidence
+                med_by_lid[lid] = float(np.median(series))
             if len(series) < MIN_SAMPLES or w <= 0 or float(np.std(series)) < 1e-9:
                 continue   # missing or dead-flat channel: no information, no vote
             feats = self._extractor.extract_from_array(series, rate)
@@ -127,6 +143,21 @@ class RuViewDetector:
         presence = int(present_frac > 0.5
                        or (self._last_motion_ts is not None
                            and ts - self._last_motion_ts <= PRESENCE_DECAY_S))
+
+        # Calibration staleness: judged only on empty-room windows (a person
+        # shadowing the link shifts its level too, so occupied windows neither
+        # accumulate toward stale nor clear an existing verdict).
+        base = self._rssi_base.get(LINK_STREAM)
+        link_med = med_by_lid.get(LINK_STREAM)
+        if base is not None and link_med is not None and not presence:
+            if abs(link_med - base) > DRIFT_DB:
+                if self._drift_since is None:
+                    self._drift_since = ts
+                if ts - self._drift_since >= STALE_AFTER_S:
+                    self.cal_stale = True
+            else:
+                self._drift_since = None
+                self.cal_stale = False
 
         fused_mbp = sum(w * r.motion_band_energy for w, r in zip(weights, sensing)) / wsum
         confidence = sum(w * r.confidence for w, r in zip(weights, sensing)) / wsum
@@ -165,7 +196,9 @@ class RuViewDetector:
         }
         state = {"presence": presence, "motion": motion,
                  "activity": round(self._activity(fused_mbp), 1),
-                 "confidence": round(float(confidence), 3)}
+                 "confidence": round(float(confidence), 3),
+                 "cal_stale": self.cal_stale}
+        self.last_detail["cal_stale"] = self.cal_stale
         if self.zones:
             state["zone"] = self._last_zone
             self.last_detail["zone"] = self._last_zone

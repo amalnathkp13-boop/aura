@@ -24,7 +24,8 @@ def test_default_detector_is_ruview(tmp_path, monkeypatch):
     state = json.loads((tmp_path / "state.json").read_text())
     assert state["src"] == "ruview"
     assert state["presence"] == 1 and state["motion"] == 1
-    assert set(state) == {"ts", "presence", "motion", "activity", "confidence", "src"}
+    assert set(state) == {"ts", "presence", "motion", "activity", "confidence",
+                          "cal_stale", "src"}
 
 def test_detector_baseline_pinned(tmp_path, monkeypatch):
     monkeypatch.setenv("AURA_HOME", str(tmp_path))

@@ -58,6 +58,12 @@ def calibrate_empty(frames, k: int = 16) -> dict:
     cal["rv_empty"] = {lid: {"var_p95": float(np.percentile([v for v, _ in s], 95)),
                              "mbp_p95": float(np.percentile([m for _, m in s], 95))}
                        for lid, s in per_link.items() if s}
+    # calibration-time level anchor per channel: lets the detector notice when
+    # the geometry has changed (phone moved) and the thresholds have gone stale
+    for lid in cal["rv_empty"]:
+        series, _ = raw_series(frames, lid)
+        if len(series):
+            cal["rv_empty"][lid]["rssi_med"] = float(np.median(series))
     cal["rv_act_floor"] = float(np.percentile(fused, 95)) if fused else AUTO_ACT_FLOOR
     return cal
 

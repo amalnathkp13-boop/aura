@@ -14,6 +14,7 @@ async function tick() {
     $('motion').textContent = s.src === 'none' ? '–' : (s.motion ? 'MOVING' : 'STILL');
     $('activity').textContent = s.activity ?? '–';
     $('srcbadge').textContent = s.src || '';
+    $('calstale').hidden = !s.cal_stale;
     document.body.classList.toggle('present', !!s.presence);
 
     rvState = s;
