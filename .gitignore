@@ -7,3 +7,4 @@ data/sessions/
 .pytest_cache/
 aura.egg-info/
 *.pt
+docs/submission/notebooklm-source.md
