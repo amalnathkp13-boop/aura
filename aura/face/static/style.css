@@ -49,3 +49,6 @@ h2 .rv-note { margin-left: .6rem; }
 
 #calstale { background: #5a2020; color: #ffd9c9; border-bottom: 1px solid #8a3a2a;
   padding: 7px 14px; text-align: center; font-size: 13px; }
+
+button[data-mode].active { background: #0e5fd8; border-color: #19b8d8; color: #fff;
+  box-shadow: 0 0 0 1px #19b8d8 inset; }

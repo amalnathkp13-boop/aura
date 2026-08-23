@@ -63,6 +63,13 @@ def create_app(cfg):
         n = _int_arg("n", 20)
         return jsonify(_tail_jsonl(cfg.aura_home / "alerts.jsonl", n))
 
+    @app.get("/api/mode")
+    def get_mode():
+        p = cfg.aura_home / "mode.json"
+        if p.exists():
+            return jsonify(json.loads(p.read_text()))
+        return jsonify({"mode": "home", "wellness_hours": 8})
+
     @app.post("/api/mode")
     def mode():
         body = request.get_json(silent=True)

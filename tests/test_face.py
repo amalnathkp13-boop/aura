@@ -28,6 +28,12 @@ def test_mode_roundtrip_and_validation(tmp_path, monkeypatch):
     assert json.loads((cfg.aura_home / "mode.json").read_text())["mode"] == "away"
     assert c.post("/api/mode", json={"mode": "party"}).status_code == 400
 
+def test_mode_get_defaults_home_then_reflects_post(tmp_path, monkeypatch):
+    cfg, c = _client(tmp_path, monkeypatch)
+    assert c.get("/api/mode").get_json() == {"mode": "home", "wellness_hours": 8}
+    c.post("/api/mode", json={"mode": "away"})
+    assert c.get("/api/mode").get_json()["mode"] == "away"
+
 def test_index_served(tmp_path, monkeypatch):
     _, c = _client(tmp_path, monkeypatch)
     assert b"Aura" in c.get("/").data

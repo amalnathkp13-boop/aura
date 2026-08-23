@@ -21,6 +21,11 @@ async function tick() {
     renderSense(await j('/api/sense'));
 
     if (tickCount % 2 === 0) {
+      try {
+        const m = await j('/api/mode');
+        document.querySelectorAll('button[data-mode]').forEach(b =>
+          b.classList.toggle('active', b.dataset.mode === m.mode));
+      } catch (e) { /* older server without GET /api/mode - highlight stays off */ }
       const rows = await j('/api/waterfall?n=120');
       drawWaterfall(rows);
       drawSpectrogram(rows);
@@ -505,8 +510,12 @@ function drawRoom() {
 requestAnimationFrame(drawRoom);
 
 document.querySelectorAll('button[data-mode]').forEach(b =>
-  b.onclick = () => j('/api/mode', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode: b.dataset.mode }) }));
+  b.onclick = async () => {
+    await j('/api/mode', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: b.dataset.mode }) });
+    document.querySelectorAll('button[data-mode]').forEach(x =>
+      x.classList.toggle('active', x === b));
+  });
 $('cal').onclick = async () => {
   alert('Learn my room: the hotspot phone is the far end of the sensor — leave it in THIS room, ' +
     'untouched, and leave the room without it. Aura learns "empty" for 10 minutes. ' +
