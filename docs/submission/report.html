@@ -412,6 +412,14 @@ units, one-command tar-based deploy.</li>
 <li><b>Failure honesty:</b> the two failure modes we hit in the field —
 bad placement and post-calibration geometry change — are both now detected and
 reported to the user (walk gate; drift banner) instead of degrading silently.</li>
+<li><b>Dashboard verified end-to-end</b> with automated browser checks
+(Playwright) against the running system: state cards, confidence gauge, room
+view, per-link vote cards, CUSUM ticker, RF waterfall, motion spectrogram,
+mode controls (server-side round-trip confirmed), alerts panel, and the
+collapsible help all render live data; every API endpoint healthy. During
+verification the <b>drift banner was observed firing in production</b> —
+the hotspot had been moved again, and the dashboard was already demanding
+recalibration on its own.</li>
 </ul>
 </section>
 
