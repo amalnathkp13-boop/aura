@@ -45,6 +45,10 @@ ZONE_MIN_MARGIN = 0.2   # runner-up must be at least this much farther than the 
 DRIFT_DB = 8.0          # link level this far from the calibration-time median = geometry changed
 STALE_AFTER_S = 60.0    # sustained (empty-room) drift for this long -> calibration declared stale
 
+KEEP_FACTOR = 0.5       # presence hysteresis: KEEPING presence needs only this fraction of the
+                        # acquire threshold, so a sitting person's micro-movements sustain it;
+                        # an empty room starts absent, where the full threshold applies
+
 
 class RFDetector:
     def __init__(self, cal=None):
@@ -60,6 +64,7 @@ class RFDetector:
                             for lid, s in ((cal or {}).get("rv_empty") or {}).items()}
         self._extractor = RssiFeatureExtractor()
         self._last_motion_ts = None
+        self._last_presence = 0   # previous update's presence (drives keep-threshold hysteresis)
         self._last_zone = None    # sticky across still periods while presence holds
         # calibration-time link RSSI median: the anchor for staleness detection
         # (the hotspot phone moving re-shapes every path and silently blinds the
@@ -111,6 +116,9 @@ class RFDetector:
 
         channels, weights = [], []
         med_by_lid = {}
+        # hysteresis: while presence is held, a link keeps voting present at a
+        # fraction of its acquire threshold (micro-movements of a still person)
+        keep = KEEP_FACTOR if self._last_presence else 1.0
         for lid in list(link_ids) + [LINK_STREAM]:
             series, w = raw_series(frames, lid)
             if len(series):
@@ -121,7 +129,7 @@ class RFDetector:
                 continue   # missing or dead-flat channel: no information, no vote
             feats = self._extractor.extract_from_array(series, rate)
             clf = PresenceClassifier(
-                presence_variance_threshold=self.var_thresh.get(lid, AUTO_VAR_THRESH),
+                presence_variance_threshold=self.var_thresh.get(lid, AUTO_VAR_THRESH) * keep,
                 motion_energy_threshold=self.motion_thresh.get(lid, AUTO_MOTION_THRESH))
             channels.append((lid, clf, feats, float(series[-1])))
             weights.append(w)
@@ -144,6 +152,7 @@ class RFDetector:
         presence = int(present_frac > 0.5
                        or (self._last_motion_ts is not None
                            and ts - self._last_motion_ts <= PRESENCE_DECAY_S))
+        self._last_presence = presence
 
         # Calibration staleness: judged only on empty-room windows (a person
         # shadowing the link shifts its level too, so occupied windows neither

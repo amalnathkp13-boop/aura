@@ -128,7 +128,7 @@ than silently going blind.
   <div class="kpi"><div class="v">0</div><div class="k">cameras, mics &amp; attached sensors</div></div>
   <div class="kpi"><div class="v">1</div><div class="k">item on the bill of materials</div></div>
   <div class="kpi"><div class="v">~2 s</div><div class="k">feature response to a doorway entry (replay-verified)</div></div>
-  <div class="kpi"><div class="v">101</div><div class="k">automated tests, all passing</div></div>
+  <div class="kpi"><div class="v">106</div><div class="k">automated tests, all passing</div></div>
   <div class="kpi"><div class="v">100%</div><div class="k">on-device — no cloud, no subscription</div></div>
 </div>
 </section>
@@ -389,10 +389,10 @@ single-threshold baseline is scored on identical data to isolate what the
 fusion architecture contributes.</p>
 <table>
 <tr><th>Metric</th><th>Aura (fused)</th><th>Naive baseline</th></tr>
-<tr><td>Presence accuracy — all 294 scored windows</td><td><b>89.8%</b></td><td>51.4%</td></tr>
-<tr><td>&nbsp;&nbsp;· empty + walking segments (190 windows)</td><td><b>96.8%</b></td><td>—</td></tr>
-<tr><td>&nbsp;&nbsp;· still-sitting segment (104 windows)</td><td>76.9%</td><td>—</td></tr>
-<tr><td>Motion accuracy (190 windows)</td><td><b>90.0%</b></td><td>77.9%</td></tr>
+<tr><td>Presence accuracy — all 294 scored windows</td><td><b>94.9%</b></td><td>51.4%</td></tr>
+<tr><td>&nbsp;&nbsp;· empty + walking segments (190 windows)</td><td><b>97.9%</b></td><td>—</td></tr>
+<tr><td>&nbsp;&nbsp;· still-sitting segment (104 windows)</td><td><b>89.4%</b></td><td>—</td></tr>
+<tr><td>Motion accuracy (190 windows)</td><td><b>91.6%</b></td><td>77.9%</td></tr>
 <tr><td>Doorway entries detected</td><td><b>4 / 4</b></td><td>4 / 4</td></tr>
 <tr><td>False-alarm windows per empty hour</td><td><b>0</b></td><td>130</td></tr>
 <tr><td>Entry latency — windowed scoring (floor ≈ 15 s)</td><td>18.2 s</td><td>33.2 s</td></tr>
@@ -409,7 +409,7 @@ with the repository as shipped.</p>
 
 <h3>6.3 Reliability engineering</h3>
 <ul>
-<li><b>101 automated tests</b> (pytest) across features, classification, fusion,
+<li><b>106 automated tests</b> (pytest) across features, classification, fusion,
 calibration incl. the walk gate and drift detection, zones, services, and the
 dashboard API.</li>
 <li><b>Replay harness:</b> any recorded session re-runs offline through the
@@ -469,7 +469,7 @@ only device in the system.</b></p>
 <tr><td class="mono">aura/guardian</td><td>Home/Away/Wellness modes, Telegram alerting</td></tr>
 <tr><td class="mono">board-app/aura-matrix</td><td>M33 LED-matrix radar app (Linux↔MCU bridge)</td></tr>
 <tr><td class="mono">training/validate.py</td><td>Chronological scorer: frames + truth timeline → metrics table</td></tr>
-<tr><td class="mono">tests/ (101 tests)</td><td>Unit + service tests for every stage</td></tr>
+<tr><td class="mono">tests/ (106 tests)</td><td>Unit + service tests for every stage</td></tr>
 <tr><td class="mono">docs/</td><td>Validation protocol, data log, design specs</td></tr>
 <tr><td class="mono">deploy/</td><td>One-command deploy + systemd units</td></tr>
 </table>
