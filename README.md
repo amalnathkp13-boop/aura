@@ -117,3 +117,10 @@ python -m pytest tests/
 
 MIT (see [LICENSE](LICENSE)). Portions adapted from an MIT-licensed upstream
 project — see [NOTICE.md](NOTICE.md).
+
+## Competition submission
+
+Built for the **Arduino Physical AI Challenge India 2026** — category
+*Smart Homes & Consumer AI*. The submission bundle lives in
+[`docs/submission/`](docs/submission/): the project report (PDF), the system
+diagram, and the demo-video script.
