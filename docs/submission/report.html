@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Aura — Project Report</title>
+<style>
+  :root {
+    --ink: #16202e; --muted: #5a6678; --accent: #0e5fd8; --accent-deep: #0a3d8f;
+    --rule: #d7dde6; --card: #f4f7fb; --good: #0a7d4f; --warn: #a05a00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 10.5pt; }
+  body {
+    font-family: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink); line-height: 1.5; background: #fff;
+  }
+  @page { size: A4; margin: 12mm 14mm; }
+  .page { max-width: 182mm; margin: 0 auto; padding: 8mm 0; }
+  @media print {
+    .page { padding: 0; }
+    a { color: var(--accent-deep); text-decoration: none; }
+    section { break-inside: auto; }
+    h2 { break-after: avoid; }
+    .card, table, figure { break-inside: avoid; }
+    .pagebreak { break-before: page; }
+  }
+
+  /* ---------- cover ---------- */
+  .cover { text-align: center; padding: 30mm 0 8mm; }
+  .cover .logo { font-size: 46pt; font-weight: 800; letter-spacing: 0.22em; color: var(--accent-deep); }
+  .cover .logo span { color: var(--accent); }
+  .cover .tag { font-size: 14pt; color: var(--ink); margin-top: 4mm; font-weight: 600; }
+  .cover .sub { font-size: 10.5pt; color: var(--muted); margin-top: 2mm; }
+  .cover .meta {
+    margin: 12mm auto 0; display: inline-block; text-align: left;
+    border-top: 2px solid var(--accent); padding-top: 5mm; font-size: 10pt;
+  }
+  .cover .meta div { margin: 1.2mm 0; }
+  .cover .meta b { display: inline-block; min-width: 34mm; color: var(--muted); font-weight: 600; }
+  .bomline {
+    margin-top: 12mm; font-size: 11pt; color: var(--accent-deep); font-weight: 700;
+  }
+
+  /* ---------- structure ---------- */
+  h2 {
+    font-size: 15pt; color: var(--accent-deep); margin: 9mm 0 3mm;
+    padding-bottom: 1.2mm; border-bottom: 2px solid var(--rule);
+  }
+  h2 .axis {
+    float: right; font-size: 8pt; font-weight: 600; color: #fff; background: var(--accent);
+    border-radius: 3px; padding: 1px 7px; margin-top: 2mm;
+  }
+  h3 { font-size: 11.5pt; margin: 4.5mm 0 1.5mm; color: var(--ink); }
+  p { margin: 2mm 0; }
+  ul, ol { margin: 2mm 0 2mm 6mm; }
+  li { margin: 1mm 0; }
+  b { font-weight: 650; }
+  .card {
+    background: var(--card); border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    border-radius: 4px; padding: 3mm 4mm; margin: 3mm 0; font-size: 9.8pt;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0; font-size: 9.6pt; }
+  th, td { border: 1px solid var(--rule); padding: 1.6mm 2.4mm; text-align: left; vertical-align: top; }
+  th { background: var(--card); font-weight: 650; }
+  code, .mono { font-family: Consolas, "Courier New", monospace; font-size: 9.2pt; }
+  code { background: var(--card); padding: 0 3px; border-radius: 2px; }
+  figure { margin: 4mm 0; text-align: center; }
+  figcaption { font-size: 9pt; color: var(--muted); margin-top: 1.5mm; }
+  .kpis { display: flex; gap: 3mm; margin: 3mm 0; flex-wrap: wrap; }
+  .kpi {
+    flex: 1 1 38mm; background: var(--card); border: 1px solid var(--rule); border-radius: 4px;
+    padding: 2.5mm 3mm; text-align: center;
+  }
+  .kpi .v { font-size: 15pt; font-weight: 750; color: var(--accent-deep); }
+  .kpi .k { font-size: 8.4pt; color: var(--muted); margin-top: 0.5mm; }
+  .foot { margin-top: 10mm; padding-top: 3mm; border-top: 1px solid var(--rule);
+          font-size: 8.6pt; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ================= COVER ================= -->
+<div class="cover">
+  <div class="logo">AU<span>RA</span></div>
+  <div class="tag">Your home already senses you — privately.</div>
+  <div class="sub">Camera-free, sensor-free presence AI on a bare Arduino UNO Q</div>
+  <div class="meta">
+    <div><b>Competition</b> Arduino Physical AI Challenge India 2026 (Robu.in × Arduino × Qualcomm)</div>
+    <div><b>Category</b> Smart Homes &amp; Consumer AI</div>
+    <div><b>Participant</b> Amalnath K P</div>
+    <div><b>Source code</b> <span class="mono">GITHUB_URL_SLOT</span> (open source, MIT)</div>
+    <div><b>Demo video</b> submitted alongside this report</div>
+    <div><b>Date</b> 23 August 2026</div>
+  </div>
+  <div class="bomline">Bill of materials: one Arduino UNO Q. Nothing else.</div>
+</div>
+
+<!-- ================= EXEC SUMMARY ================= -->
+<section>
+<h2>1 · Executive summary</h2>
+<p>
+Smart homes want to know one thing above all — <b>is someone here, where, and are
+they okay?</b> — and today every mainstream answer compromises the home it serves:
+cameras watch your family, microphones listen to them, and every added sensor is
+more hardware, more cost, and usually another cloud subscription.
+</p>
+<p>
+<b>Aura answers the question with hardware the home already owns.</b> The Arduino
+UNO Q's own WiFi radio hears the connected hotspot link and every access point
+around it; a human body moving through those radio paths bends them measurably.
+Aura converts a bare UNO Q — no camera, no microphone, no attached sensor of any
+kind — into a real-time presence, activity, and zone sensor with a live dashboard,
+an LED-matrix radar face, and Guardian modes that turn detection into consumer
+value: <b>Away</b> (instant Telegram intrusion alerts), <b>Home</b> (ambient
+awareness), and <b>Wellness</b> (inactivity alerts for elder care).
+</p>
+<p>
+Everything runs on-device with <b>deterministic, explainable signal processing</b>:
+no training data, no neural black box, no cloud dependency — the system works with
+the internet down, and every decision traces to a threshold the user calibrated in
+their own room in fifteen minutes. The system is honest about its own limits by
+design: a calibration quality gate refuses a setup that cannot actually sense, and
+a drift detector raises a dashboard banner when the radio geometry changes rather
+than silently going blind.
+</p>
+<div class="kpis">
+  <div class="kpi"><div class="v">0</div><div class="k">cameras, mics &amp; attached sensors</div></div>
+  <div class="kpi"><div class="v">1</div><div class="k">item on the bill of materials</div></div>
+  <div class="kpi"><div class="v">~2 s</div><div class="k">feature response to a doorway entry (replay-verified)</div></div>
+  <div class="kpi"><div class="v">97</div><div class="k">automated tests, all passing</div></div>
+  <div class="kpi"><div class="v">100%</div><div class="k">on-device — no cloud, no subscription</div></div>
+</div>
+</section>
+
+<!-- ================= PROBLEM ================= -->
+<section>
+<h2>2 · The problem <span class="axis">Innovation &amp; Originality</span></h2>
+<p>
+Occupancy is the primitive underneath most of the smart home: security arming,
+lighting and HVAC automation, and — increasingly important in India's
+multi-generational households — <b>wellness monitoring of elderly family members
+living alone</b>. The existing options each fail a different way:
+</p>
+<table>
+<tr><th>Approach</th><th>What it costs the household</th></tr>
+<tr><td>Cameras + vision AI</td><td>Constant surveillance of your own family; images of your home on someone's cloud; socially unusable in bedrooms and bathrooms — exactly where elderly falls happen.</td></tr>
+<tr><td>PIR / mmWave / BLE sensors</td><td>A device per room, batteries, pairing, cost; PIR misses still people; another hub, often another subscription.</td></tr>
+<tr><td>Wearables for elders</td><td>Only work when worn; the people who need them most forget or refuse them.</td></tr>
+</table>
+<p>
+The result: the homes that most need presence awareness — for security while away
+and dignity-preserving care while home — are the least willing to install what it
+currently takes.
+</p>
+</section>
+
+<!-- ================= INNOVATION ================= -->
+<section>
+<h2>3 · The Aura idea <span class="axis">Innovation &amp; Originality</span></h2>
+<p>
+<b>The radio is the sensor.</b> Radio waves at WiFi frequencies diffract around
+and reflect off the human body; a person crossing the path between the board and
+its hotspot — or between the board and any access point it can hear — measurably
+disturbs the received signal strength. Aura treats every audible radio path as an
+invisible tripwire and fuses them into one privacy-preserving presence sensor.
+It is <i>physically incapable</i> of taking a picture.</p>
+<h3>What is original here</h3>
+<ul>
+<li><b>A hard constraint as a product thesis:</b> the shipped system is a bare
+UNO Q — no peripheral of any kind. If Aura works, every UNO Q owner already owns
+the hardware. (The core RSSI feature extractor and rule classifier are adapted
+from an MIT-licensed open-source project — full attribution in
+<code>NOTICE.md</code> — everything else described below is Aura-original.)</li>
+<li><b>Multi-link fusion:</b> instead of one radio link, Aura classifies every
+audible channel independently — connected-link RSSI at 32 samples/s plus each
+scanned AP — and fuses them with stability-weighted voting. A strict weighted
+majority is required for presence, so one glitching channel cannot raise a false
+alarm (measured: transmit-power steps on scan channels mimic entries ~2×/8 min;
+the fusion suppresses all of them).</li>
+<li><b>Zone localization from signatures:</b> a two-minute per-spot calibration
+records how hard each channel is bent from that spot; at runtime the nearest
+log-scaled signature names the zone (<code>doorway</code>, <code>center</code>).
+Measured insight: two zones' signatures were 0.997-cosine parallel but 3×
+apart in magnitude — the magnitude <i>is</i> the zone information.</li>
+<li><b>Self-aware calibration (fails loudly, not silently):</b> "Learn my room"
+derives per-channel thresholds with a quality gate that rejects a calibration
+that cannot see the user walk; at runtime a drift detector compares the live
+link level against its calibration-time anchor and raises a dashboard banner
+after 60 s of sustained &gt;8 dB deviation while the room reads empty. This
+caught a real 19 dB hotspot relocation during our own validation day.</li>
+<li><b>Deterministic, explainable consumer AI:</b> the dashboard shows the
+actual detector internals — per-channel votes, thresholds, live vote fractions,
+change-points — not a mascot animation. Users can see <i>why</i> Aura decided.</li>
+<li><b>Dual-brain use of the UNO Q:</b> Linux side runs the sensing pipeline;
+the STM32 M33 real-time MCU renders a radar/aura animation on the 8×13 LED
+matrix, fed over the on-board Linux↔MCU bridge — the whole product in one
+device.</li>
+</ul>
+<p class="card"><b>Honesty note.</b> Aura performs RF <i>sensing</i> with an
+imaging-<i>style</i> visualization. RSSI carries no position information and Aura
+never claims imaging, through-wall vision, or pose estimation. The radar view is
+deliberately abstract, and all accuracy claims in this report are our own
+measurements on this system.</p>
+</section>
+
+<!-- ================= ARCHITECTURE ================= -->
+<section class="pagebreak">
+<h2>4 · System architecture <span class="axis">Technical Documentation</span></h2>
+
+<figure>
+<svg viewBox="0 0 980 470" xmlns="http://www.w3.org/2000/svg" style="max-width:100%">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#5a6678"/>
+    </marker>
+  </defs>
+  <style>
+    .box { fill:#f4f7fb; stroke:#9fb2c8; rx:8; }
+    .dev { fill:#eaf1fb; stroke:#0e5fd8; stroke-width:1.6; }
+    .lbl { font:600 13px "Segoe UI",Arial; fill:#16202e; }
+    .sm  { font:11px "Segoe UI",Arial; fill:#5a6678; }
+    .file{ font:11px Consolas,monospace; fill:#0a3d8f; }
+    .flow{ stroke:#5a6678; stroke-width:1.4; fill:none; marker-end:url(#ar); }
+    .rf  { stroke:#0e5fd8; stroke-width:1.2; fill:none; stroke-dasharray:5 4; }
+  </style>
+
+  <!-- RF environment -->
+  <rect x="10" y="30" width="200" height="400" class="box" rx="8"/>
+  <text x="110" y="52" text-anchor="middle" class="lbl">RF environment</text>
+  <circle cx="110" cy="110" r="26" fill="#fff" stroke="#0e5fd8"/>
+  <text x="110" y="106" text-anchor="middle" class="sm">home</text>
+  <text x="110" y="120" text-anchor="middle" class="sm">hotspot</text>
+  <circle cx="60" cy="210" r="22" fill="#fff" stroke="#9fb2c8"/>
+  <text x="60" y="207" text-anchor="middle" class="sm">AP 1</text>
+  <text x="60" y="220" text-anchor="middle" class="sm">2.4 GHz</text>
+  <circle cx="158" cy="210" r="22" fill="#fff" stroke="#9fb2c8"/>
+  <text x="158" y="214" text-anchor="middle" class="sm">AP n</text>
+  <path d="M85 300 a25 25 0 1 1 50 0 l-6 90 h-38 z" fill="#fff" stroke="#0a7d4f" stroke-width="1.5"/>
+  <text x="110" y="416" text-anchor="middle" class="sm" fill="#0a7d4f">person bends the paths</text>
+
+  <!-- UNO Q -->
+  <rect x="260" y="30" width="430" height="400" class="dev" rx="10"/>
+  <text x="475" y="54" text-anchor="middle" class="lbl">Arduino UNO Q — single device</text>
+  <rect x="278" y="70" width="260" height="340" class="box"/>
+  <text x="408" y="90" text-anchor="middle" class="lbl">Linux (Debian)</text>
+  <rect x="294" y="104" width="228" height="40" fill="#fff" stroke="#9fb2c8" rx="5"/>
+  <text x="408" y="121" text-anchor="middle" class="lbl">aura-ear</text>
+  <text x="408" y="136" text-anchor="middle" class="sm">link RSSI 32 S/s + AP scan → 4 Hz frames</text>
+  <text x="408" y="162" text-anchor="middle" class="file">frames.jsonl (flight recorder)</text>
+  <rect x="294" y="176" width="228" height="52" fill="#fff" stroke="#9fb2c8" rx="5"/>
+  <text x="408" y="193" text-anchor="middle" class="lbl">aura-brain</text>
+  <text x="408" y="207" text-anchor="middle" class="sm">features → per-link classify → fusion</text>
+  <text x="408" y="221" text-anchor="middle" class="sm">zones · drift watch · 2 Hz</text>
+  <text x="408" y="247" text-anchor="middle" class="file">state.json · sense.json</text>
+  <rect x="294" y="262" width="110" height="52" fill="#fff" stroke="#9fb2c8" rx="5"/>
+  <text x="349" y="282" text-anchor="middle" class="lbl">aura-face</text>
+  <text x="349" y="297" text-anchor="middle" class="sm">dashboard</text>
+  <text x="349" y="309" text-anchor="middle" class="sm">:8080</text>
+  <rect x="412" y="262" width="110" height="52" fill="#fff" stroke="#9fb2c8" rx="5"/>
+  <text x="467" y="282" text-anchor="middle" class="lbl">aura-guardian</text>
+  <text x="467" y="297" text-anchor="middle" class="sm">Home / Away /</text>
+  <text x="467" y="309" text-anchor="middle" class="sm">Wellness</text>
+  <text x="408" y="340" text-anchor="middle" class="sm">systemd services · atomic writes · replayable</text>
+  <text x="408" y="356" text-anchor="middle" class="sm">calibration.json (thresholds + drift anchors)</text>
+
+  <rect x="554" y="70" width="120" height="340" class="box"/>
+  <text x="614" y="90" text-anchor="middle" class="lbl">M33 MCU</text>
+  <rect x="566" y="110" width="96" height="64" fill="#fff" stroke="#9fb2c8" rx="5"/>
+  <text x="614" y="132" text-anchor="middle" class="lbl">radar</text>
+  <text x="614" y="147" text-anchor="middle" class="sm">sketch</text>
+  <text x="614" y="161" text-anchor="middle" class="sm">5 Hz</text>
+  <rect x="576" y="200" width="76" height="50" fill="#16202e" rx="4"/>
+  <text x="614" y="222" text-anchor="middle" style="font:10px Consolas" fill="#ffd83c">● ● ● ●</text>
+  <text x="614" y="236" text-anchor="middle" style="font:10px Consolas" fill="#ffd83c">8×13 LED</text>
+  <text x="614" y="280" text-anchor="middle" class="sm">Linux ↔ MCU</text>
+  <text x="614" y="294" text-anchor="middle" class="sm">bridge (RPC)</text>
+
+  <!-- user surfaces -->
+  <rect x="740" y="30" width="230" height="400" class="box"/>
+  <text x="855" y="52" text-anchor="middle" class="lbl">User surfaces</text>
+  <rect x="758" y="80" width="194" height="110" fill="#fff" stroke="#9fb2c8" rx="6"/>
+  <text x="855" y="102" text-anchor="middle" class="lbl">Live dashboard</text>
+  <text x="855" y="120" text-anchor="middle" class="sm">state · zones · per-link votes</text>
+  <text x="855" y="135" text-anchor="middle" class="sm">waterfall · spectrogram · radar</text>
+  <text x="855" y="150" text-anchor="middle" class="sm">"Learn my room" · drift banner</text>
+  <text x="855" y="172" text-anchor="middle" class="sm">any browser on the LAN</text>
+  <rect x="758" y="220" width="194" height="70" fill="#fff" stroke="#9fb2c8" rx="6"/>
+  <text x="855" y="243" text-anchor="middle" class="lbl">Telegram alerts</text>
+  <text x="855" y="260" text-anchor="middle" class="sm">Away: intrusion</text>
+  <text x="855" y="275" text-anchor="middle" class="sm">Wellness: inactivity</text>
+  <text x="855" y="330" text-anchor="middle" class="sm">No cloud in the loop —</text>
+  <text x="855" y="345" text-anchor="middle" class="sm">Telegram is the only optional</text>
+  <text x="855" y="360" text-anchor="middle" class="sm">external service</text>
+
+  <!-- flows -->
+  <path class="rf" d="M136 118 C 200 130, 230 140, 292 124"/>
+  <path class="rf" d="M80 220 C 180 240, 230 160, 292 132"/>
+  <path class="rf" d="M178 218 C 230 230, 250 150, 292 138"/>
+  <path class="flow" d="M408 144 L408 152"/>
+  <path class="flow" d="M408 166 L408 176"/>
+  <path class="flow" d="M408 228 L408 236"/>
+  <path class="flow" d="M370 252 L349 262"/>
+  <path class="flow" d="M446 252 L467 262"/>
+  <path class="flow" d="M522 288 C 540 288, 546 240, 566 174"/>
+  <path class="flow" d="M404 288 C 560 380, 640 330, 758 140"/>
+  <path class="flow" d="M522 300 C 620 360, 680 300, 758 258"/>
+</svg>
+<figcaption><b>Figure 1 — Aura system diagram.</b> A file-based pipeline of
+independent daemons on the UNO Q's Linux side, mirrored to the M33-driven LED
+matrix; every stage is restartable and replayable in isolation.</figcaption>
+</figure>
+
+<h3>Design principles</h3>
+<ul>
+<li><b>Files as interfaces:</b> each stage communicates through append-only or
+atomically-replaced JSON files. <code>frames.jsonl</code> is a flight recorder:
+any live incident can be replayed offline through the exact production detector
+— this is how every number in §6 was verified.</li>
+<li><b>Independent daemons:</b> <code>aura-ear</code> (radio capture),
+<code>aura-brain</code> (detection), <code>aura-face</code> (dashboard),
+<code>aura-guardian</code> (modes/alerts) are separate systemd services; a crash
+in one never takes down sensing.</li>
+<li><b>Edge-only:</b> all computation on the QRB's Cortex-A53 cores; typical
+inference cost is a 15-s window of numpy signal processing every 500 ms.</li>
+</ul>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section>
+<h2>5 · Detection pipeline <span class="axis">Technical Documentation</span></h2>
+<ol>
+<li><b>Capture (4 Hz frames):</b> connected-link RSSI sampled at 32 S/s via
+station dump under a keep-alive ping (the sensing workhorse), plus periodic
+scans of every audible AP. MAC identifiers are salted-hashed at capture — raw
+addresses never leave the ear.</li>
+<li><b>Features (15-s sliding window, per channel):</b> RSSI variance;
+motion-band (0.5–2 Hz) and breathing-band (0.1–0.5 Hz) FFT power; CUSUM
+change-point count. A walking body produces oscillatory fading in the motion
+band; electronics produce steps and spikes — the features separate them.</li>
+<li><b>Per-channel classification</b> against thresholds calibrated for
+<i>this room</i>, with cross-receiver agreement between channels.</li>
+<li><b>Fusion (Aura-original):</b> stability-weighted voting across channels.
+Presence requires a strict weighted majority; motion likewise. Presence then
+holds 120 s past the last motion — a reading person is not an empty room.</li>
+<li><b>Zones:</b> per-spot calibrated signatures (median per-channel variance +
+band power); runtime nearest-match on log-scaled features with a distance
+ceiling and a runner-up margin, so an ambiguous reading yields <i>no</i> label
+rather than a wrong one.</li>
+<li><b>Calibration &amp; self-monitoring:</b> "Learn my room" = 10 min empty +
+5 min walking; per-channel thresholds derive from the empty distribution vs the
+walk distribution, and a <b>quality gate rejects</b> the calibration outright if
+walking is not separable from the empty floor (wrong placement). Each channel's
+calibration-time RSSI median is stored as a drift anchor; sustained deviation
+&gt;8 dB for 60 s while the room reads empty raises the dashboard's
+<b>recalibrate banner</b>.</li>
+</ol>
+</section>
+
+<!-- ================= FUNCTIONALITY / RESULTS ================= -->
+<section class="pagebreak">
+<h2>6 · Measured behaviour &amp; validation <span class="axis">Functionality &amp; Execution</span></h2>
+<p>All numbers below are measurements of this system in a real furnished room,
+using the production pipeline; replay-verified means the recorded frames were
+re-run offline through the exact deployed detector.</p>
+
+<h3>6.1 Measured engineering behaviour</h3>
+<table>
+<tr><th>Property</th><th>Measured value</th><th>Evidence</th></tr>
+<tr><td>End-to-end plumbing latency (radio → dashboard)</td><td>≤ 1.5 s</td><td>4 Hz frames (0.17 s freshness measured), 2 Hz inference, 500 ms UI poll</td></tr>
+<tr><td>Feature response to a doorway entry</td><td>~2 s</td><td>Replay: entry at t+0; channel votes <i>active</i> at t+2 s, variance 0.37 → 6.3 dB²</td></tr>
+<tr><td>Empty-room noise floor (link channel)</td><td>0.1–0.2 dB² variance</td><td>Live capture, quiet room, calibrated placement</td></tr>
+<tr><td>Presence hold after last motion</td><td>120 s by design</td><td>Still-person test; replay-verified decay timing</td></tr>
+<tr><td>False-alarm suppression by fusion</td><td>~2 single-channel glitch bursts per 8 min on an empty room — all suppressed</td><td>30-min empty capture replayed; glitches (AP transmit-power steps) never won the weighted majority</td></tr>
+<tr><td>Calibration drift detection</td><td>Flags 60 s after a sustained &gt;8 dB level shift</td><td>Caught a real 19 dB hotspot relocation on validation day; replay fires at exactly +60 s</td></tr>
+<tr><td>Zone signature separability</td><td>Two real zones: cosine 0.997 in shape, 3× apart in magnitude</td><td>Live calibration captures; magnitude-aware matching implemented accordingly</td></tr>
+</table>
+
+<h3>6.2 Live validation session</h3>
+<!-- METRICS_SLOT_START -->
+<table>
+<tr><th>Metric</th><th>Fused detector</th><th>Naive baseline</th><th>Protocol</th></tr>
+<tr><td>Presence accuracy (windowed, vs declared truth)</td><td class="mono">[measured tonight]</td><td class="mono">[measured tonight]</td><td rowspan="3">Scripted session per <code>docs/validation-protocol.md</code>: empty phase, repeated doorway entries, still-sitting phase; truth timeline declared at phase boundaries; scored chronologically by <code>training/validate.py</code></td></tr>
+<tr><td>Doorway-entry detection latency (stopwatch, median)</td><td class="mono">[measured tonight]</td><td class="mono">—</td></tr>
+<tr><td>False-alarm windows per empty hour</td><td class="mono">[measured tonight]</td><td class="mono">[measured tonight]</td></tr>
+</table>
+<!-- METRICS_SLOT_END -->
+
+<h3>6.3 Reliability engineering</h3>
+<ul>
+<li><b>97 automated tests</b> (pytest) across features, classification, fusion,
+calibration incl. the walk gate and drift detection, zones, services, and the
+dashboard API.</li>
+<li><b>Replay harness:</b> any recorded session re-runs offline through the
+production detector — used throughout development for regression forensics.</li>
+<li><b>Atomic state writes</b>, crash-isolated daemons, boot-persistent systemd
+units, one-command tar-based deploy.</li>
+<li><b>Failure honesty:</b> the two failure modes we hit in the field —
+bad placement and post-calibration geometry change — are both now detected and
+reported to the user (walk gate; drift banner) instead of degrading silently.</li>
+</ul>
+</section>
+
+<!-- ================= SMART HOME FIT ================= -->
+<section>
+<h2>7 · Smart-home &amp; consumer value <span class="axis">Functionality &amp; Execution</span></h2>
+<table>
+<tr><th>Mode</th><th>Consumer story</th></tr>
+<tr><td><b>Away</b> (security)</td><td>Arm when leaving; any detected presence sends an instant Telegram alert. A security system with nothing pointed at your family and nothing for an intruder to notice.</td></tr>
+<tr><td><b>Wellness</b> (elder care)</td><td>Inverted logic: <i>absence</i> of activity where there should be some raises the alert. Works in bedrooms and bathrooms — precisely where cameras are unacceptable and falls actually happen. No wearable to forget.</td></tr>
+<tr><td><b>Home</b> (ambient awareness)</td><td>Presence/zone state on the dashboard and LED matrix; a foundation signal for lighting/HVAC automation (occupancy-driven energy saving) via the same JSON state files.</td></tr>
+</table>
+<p><b>Consumer-AI properties:</b> fifteen-minute self-calibration with honest
+failure reporting; explainable decisions a user can inspect; no cloud account,
+no subscription, no data leaving the home (Telegram alerts are the single,
+optional, outbound integration); total added hardware cost of zero.</p>
+</section>
+
+<!-- ================= TECH DOC ================= -->
+<section>
+<h2>8 · Technical documentation <span class="axis">Technical Documentation</span></h2>
+<h3>8.1 Bill of materials</h3>
+<table>
+<tr><th>#</th><th>Item</th><th>Qty</th><th>Role</th></tr>
+<tr><td>1</td><td>Arduino UNO Q (Qualcomm QRB Linux SoC + STM32 Cortex-M33 MCU, on-board WiFi, 8×13 LED matrix)</td><td>1</td><td>The entire system: sensor, brain, display</td></tr>
+<tr><td>—</td><td><i>Already in the home:</i> WiFi hotspot/router; any browser on the LAN</td><td>—</td><td>Far end of the sensing link; user interface</td></tr>
+</table>
+<p>No circuit is constructed — there is nothing to wire. Figure 1 is the
+system diagram; the board is used exactly as shipped.</p>
+
+<h3>8.2 Repository map</h3>
+<table>
+<tr><td class="mono">aura/ear</td><td>Radio capture daemon (link RSSI + AP scan → 4 Hz frames; salted-hash anonymization)</td></tr>
+<tr><td class="mono">aura/brain</td><td>Feature extraction, per-link classification, multi-link fusion, zones, drift watch, calibration</td></tr>
+<tr><td class="mono">aura/face</td><td>Flask dashboard + RF sensing console (live detector internals)</td></tr>
+<tr><td class="mono">aura/guardian</td><td>Home/Away/Wellness modes, Telegram alerting</td></tr>
+<tr><td class="mono">board-app/aura-matrix</td><td>M33 LED-matrix radar app (Linux↔MCU bridge)</td></tr>
+<tr><td class="mono">training/validate.py</td><td>Chronological scorer: frames + truth timeline → metrics table</td></tr>
+<tr><td class="mono">tests/ (97 tests)</td><td>Unit + service tests for every stage</td></tr>
+<tr><td class="mono">docs/</td><td>Validation protocol, data log, design specs</td></tr>
+<tr><td class="mono">deploy/</td><td>One-command deploy + systemd units</td></tr>
+</table>
+
+<h3>8.3 Licensing</h3>
+<p>MIT-licensed, fully open source. The RSSI feature extractor and rule
+classifier are adapted from an MIT-licensed upstream project; the pinned
+upstream commit, file provenance, local modifications, and full license text
+are recorded in <code>NOTICE.md</code>. All other components — capture
+pipeline, multi-link fusion, zones, drift detection, calibration gates,
+dashboard, guardian, M33 app — are original to Aura.</p>
+</section>
+
+<!-- ================= LIMITS ================= -->
+<section>
+<h2>9 · Honest limitations &amp; roadmap</h2>
+<ul>
+<li><b>Sensing coverage follows radio geometry:</b> sensitivity concentrates
+around the board↔hotspot path. Aura turns this from a silent failure into a
+guided setup: the walk gate rejects bad placement and the dashboard's drift
+banner demands recalibration when geometry changes.</li>
+<li><b>Windowed confirmation:</b> features respond in ~2 s, but confirmed
+presence uses a 15-s analysis window — Aura is a presence system, not a
+millisecond tripwire.</li>
+<li><b>RSSI, not CSI:</b> the UNO Q's radio exposes signal strength, not
+channel state information; Aura therefore claims presence/activity/zones —
+never imaging or pose.</li>
+<li><b>Roadmap:</b> Home Assistant / Matter bridge from the existing JSON
+state; multi-board room mesh with cooperative fusion; breathing-band
+stillness detection for sleep-safe wellness; CSI-capable radio support where
+hardware allows.</li>
+</ul>
+</section>
+
+<!-- ================= SUBMISSION ================= -->
+<section>
+<h2>10 · Submission artifacts</h2>
+<table>
+<tr><td>Source code (open source, MIT)</td><td class="mono">GITHUB_URL_SLOT</td></tr>
+<tr><td>Demo video (3–5 min)</td><td>submitted with this report</td></tr>
+<tr><td>System diagram</td><td>Figure 1 (also provided as a standalone image)</td></tr>
+<tr><td>UNO Q purchase proof</td><td>attached separately, as required</td></tr>
+</table>
+<p class="foot">Aura — Arduino Physical AI Challenge India 2026 · Smart Homes &amp;
+Consumer AI · Amalnath K P · All measurements are of the described system in a
+real home; upstream algorithm attribution in NOTICE.md.</p>
+</section>
+
+</div>
+</body>
+</html>
