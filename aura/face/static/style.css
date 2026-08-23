@@ -1,54 +1,158 @@
-:root { color-scheme: dark; }
-body { margin: 0; font-family: system-ui, sans-serif; background: #0b0e14; color: #dce3f0; }
-header { display: flex; align-items: baseline; gap: 1rem; padding: 1rem 1.5rem; border-bottom: 1px solid #1c2333; }
-h1 { margin: 0; font-size: 1.4rem; letter-spacing: .2em; color: #7ac7ff; }
-#srcbadge { font-size: .75rem; color: #6b7690; }
-section { padding: 1rem 1.5rem; }
-#statecards { display: flex; gap: 1rem; }
-.card { background: #121826; border: 1px solid #1c2333; border-radius: 10px; padding: 1rem 1.5rem; min-width: 8rem; }
-.card .k { font-size: .7rem; text-transform: uppercase; color: #6b7690; }
-.card .v { font-size: 1.6rem; font-weight: 700; }
-body.present .card .v { color: #7affc4; }
-canvas { width: 100%; max-width: 720px; border-radius: 8px; image-rendering: pixelated; image-rendering: crisp-edges; }
-.wf-legend { display: flex; align-items: center; gap: .5rem; max-width: 720px; margin-bottom: .4rem; font-size: .7rem; color: #6b7690; }
-.wf-legend-bar { flex: 0 0 120px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #0a1a3c 0%, #19b8d8 50%, #ffd83c 100%); }
-.how { max-width: 720px; margin-top: .6rem; font-size: .8rem; color: #9aa4bd; }
-.how summary { cursor: pointer; color: #7ac7ff; font-size: .75rem; }
-.how p { margin: .5rem 0 0; line-height: 1.5; }
-button { background: #1a2340; color: #dce3f0; border: 1px solid #2a3550; border-radius: 8px; padding: .5rem 1rem; margin-right: .5rem; cursor: pointer; }
-button:hover { border-color: #7ac7ff; }
-ul { margin: 0; padding-left: 1.2rem; color: #ffb37a; }
-.k { font-size: .7rem; text-transform: uppercase; color: #6b7690; }
-#rv-console { border-top: 1px solid #1c2333; border-bottom: 1px solid #1c2333; }
-.rv-note { font-size: .65rem; color: #6b7690; font-weight: 400; letter-spacing: 0; }
-h2 .rv-note { margin-left: .6rem; }
+/* Aura dashboard — instrument-panel shell around live canvas readouts.
+   Canvas colormaps are drawn in JS (navy #0a1a3c / cyan #19b8d8 / amber #ffd83c);
+   the shell derives from the same family so panels and plots read as one machine. */
+:root {
+  color-scheme: dark;
+  --bg: #070b12;
+  --surface: #101726;
+  --surface-2: #0c1220;
+  --edge: #202b41;
+  --ink: #e6ecf7;
+  --muted: #7e8aa3;
+  --cyan: #19b8d8;
+  --blue: #7ac7ff;
+  --mint: #7affc4;
+  --amber: #ffd83c;
+  --red: #ff6b57;
+  --font-ui: "Space Grotesk", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: var(--font-ui); background: var(--bg); color: var(--ink);
+  background-image: radial-gradient(1100px 500px at 50% -220px, #0d1a30 0%, transparent 70%);
+}
+main-wrap, body > section, header, #calstale { max-width: 1180px; margin-left: auto; margin-right: auto; }
+
+/* ---------- masthead ---------- */
+header {
+  display: flex; align-items: center; gap: .9rem; padding: 1.1rem 1.5rem .9rem;
+}
+h1 {
+  margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: .34em; color: var(--ink);
+}
+h1::before {
+  content: ""; display: inline-block; width: 26px; height: 26px; margin-right: .65rem;
+  vertical-align: -15%;
+  background: no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='4' fill='%23ffd83c'/%3E%3Cpath d='M16 5a11 11 0 0 1 11 11' stroke='%2319b8d8' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M16 27A11 11 0 0 1 5 16' stroke='%2319b8d8' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+header::after {
+  content: "deterministic RF sensing"; font-size: .68rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--muted); margin-left: .2rem;
+}
+#srcbadge { order: 9; margin-left: auto; font-family: var(--font-data); font-size: .72rem;
+  color: var(--mint); background: var(--surface); border: 1px solid var(--edge);
+  border-radius: 999px; padding: .28rem .8rem .28rem .6rem; }
+#srcbadge:not(:empty)::before {
+  content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--mint); margin-right: .45rem; animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: .35; } }
+
+/* ---------- stale-calibration banner ---------- */
+#calstale {
+  background: linear-gradient(90deg, #451a12, #5a2020);
+  color: #ffd9c9; border: 1px solid #8a3a2a; border-radius: 10px;
+  padding: .55rem 1rem; text-align: center; font-size: .82rem; margin-bottom: .4rem;
+}
+#calstale[hidden] { display: none; }
+
+/* ---------- shared card + section grammar ---------- */
+section { padding: 1.05rem 1.5rem; }
+h2 {
+  margin: 0 0 .8rem; font-size: .78rem; font-weight: 600; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--muted); display: flex; align-items: center;
+}
+h2::before { content: ""; width: 14px; height: 2px; background: var(--cyan); margin-right: .6rem; }
+.rv-note { font-size: .62rem; color: var(--muted); font-weight: 400; letter-spacing: .04em;
+  text-transform: none; }
+h2 .rv-note { margin-left: .7rem; }
+.card, .rv-statebox, .rv-linkcard {
+  background: linear-gradient(180deg, rgba(122,199,255,.055), transparent 34%) var(--surface);
+  border: 1px solid var(--edge); border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.28);
+}
+.k { font-size: .64rem; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
+
+/* ---------- state cards (Presence is the hero instrument) ---------- */
+#statecards { display: flex; gap: 1rem; flex-wrap: wrap; }
+.card { padding: .95rem 1.5rem; min-width: 9.5rem; transition: border-color .5s, box-shadow .5s; }
+.card .v { font-size: 1.75rem; font-weight: 700; letter-spacing: .04em; margin-top: .15rem;
+  font-family: var(--font-data); }
+#statecards .card:first-child { min-width: 13rem; border-left: 3px solid var(--edge); }
+body.present .card .v { color: var(--mint); }
+body.present #statecards .card:first-child {
+  border-color: rgba(122,255,196,.55); border-left-color: var(--mint);
+  box-shadow: 0 0 0 1px rgba(122,255,196,.25), 0 0 26px rgba(122,255,196,.14);
+}
+
+/* ---------- RF sensing console ---------- */
+#rv-console { border-top: 1px solid var(--edge); border-bottom: 1px solid var(--edge); }
 .rv-top { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start; }
-.rv-statebox { background: #121826; border: 1px solid #1c2333; border-radius: 10px; padding: 1rem 1.5rem; min-width: 16rem; }
-.rv-state { font-size: 1.5rem; font-weight: 800; letter-spacing: .1em; margin: .2rem 0 .8rem; color: #6b7690; }
-.rv-state.present_still { color: #ffd83c; }
-.rv-state.active { color: #7affc4; }
+.rv-statebox { padding: 1rem 1.5rem; min-width: 16rem; }
+.rv-state { font-size: 1.45rem; font-weight: 700; letter-spacing: .12em; margin: .25rem 0 .8rem;
+  color: var(--muted); font-family: var(--font-data); }
+.rv-state.present_still { color: var(--amber); }
+.rv-state.active { color: var(--mint); }
 #rv-gauge { width: 150px; image-rendering: auto; }
 .rv-meters { margin-top: .8rem; display: flex; flex-direction: column; gap: .6rem; max-width: 280px; }
-.rv-bar { height: 10px; border-radius: 5px; background: #0a1a3c; overflow: hidden; margin-top: .2rem; }
-.rv-bar div { height: 100%; width: 0; background: linear-gradient(90deg, #19b8d8, #ffd83c); transition: width .4s; }
+.rv-bar { height: 9px; border-radius: 5px; background: #0a1a3c; overflow: hidden; margin-top: .25rem; }
+.rv-bar div { height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--amber));
+  transition: width .4s; }
 .rv-roomwrap { text-align: center; max-width: 360px; }
-#rv-room { width: 340px; max-width: 100%; border-radius: 12px; background: #0a1020; border: 1px solid #1c2333; }
+#rv-room { width: 340px; max-width: 100%; border-radius: 12px; background: #0a1020;
+  border: 1px solid var(--edge); }
 #rv-links { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1rem; }
-.rv-linkcard { background: #121826; border: 1px solid #1c2333; border-radius: 10px; padding: .6rem .9rem; font-size: .75rem; min-width: 13rem; }
-.rv-linkcard .id { font-family: monospace; color: #7ac7ff; }
-.rv-linkcard .rssi { color: #9aa4bd; margin-left: .4rem; }
-.rv-vote { float: right; font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 6px; text-transform: uppercase; }
-.rv-vote.absent { background: #1c2333; color: #6b7690; }
-.rv-vote.present_still { background: #3d3416; color: #ffd83c; }
-.rv-vote.active { background: #123d2c; color: #7affc4; }
-.rv-minibar { height: 6px; border-radius: 3px; background: #0a1a3c; margin: .15rem 0 .4rem; position: relative; }
-.rv-minibar .fill { height: 100%; border-radius: 3px; background: #19b8d8; }
-.rv-minibar .th { position: absolute; top: -2px; bottom: -2px; width: 2px; background: #ffd83c; }
-.rv-tickerhead { margin-top: 1rem; }
-#rv-ticker { color: #9aa4bd; font-size: .75rem; max-width: 720px; list-style: none; padding-left: 0; }
+.rv-linkcard { padding: .65rem .95rem; font-size: .74rem; min-width: 13.5rem; }
+.rv-linkcard .id { font-family: var(--font-data); color: var(--blue); }
+.rv-linkcard .rssi { font-family: var(--font-data); color: var(--muted); margin-left: .4rem; }
+.rv-vote { float: right; font-size: .6rem; font-weight: 700; padding: .18rem .5rem;
+  border-radius: 999px; text-transform: uppercase; letter-spacing: .08em; }
+.rv-vote.absent { background: #1a2233; color: var(--muted); }
+.rv-vote.present_still { background: #3d3416; color: var(--amber); }
+.rv-vote.active { background: #123d2c; color: var(--mint); }
+.rv-minibar { height: 6px; border-radius: 3px; background: #0a1a3c; margin: .2rem 0 .45rem;
+  position: relative; }
+.rv-minibar .fill { height: 100%; border-radius: 3px; background: var(--cyan); }
+.rv-minibar .th { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--amber); }
+.rv-tickerhead { margin-top: 1.1rem; }
+#rv-ticker { color: var(--muted); font-family: var(--font-data); font-size: .72rem;
+  max-width: 720px; list-style: none; padding-left: 0; }
+#rv-ticker li { padding: .12rem 0; border-bottom: 1px dashed #1a2233; }
 
-#calstale { background: #5a2020; color: #ffd9c9; border-bottom: 1px solid #8a3a2a;
-  padding: 7px 14px; text-align: center; font-size: 13px; }
+/* ---------- plots ---------- */
+canvas { width: 100%; max-width: 720px; border-radius: 10px; border: 1px solid var(--edge);
+  image-rendering: pixelated; image-rendering: crisp-edges; }
+.wf-legend { display: flex; align-items: center; gap: .5rem; max-width: 720px;
+  margin-bottom: .45rem; font-size: .66rem; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); }
+.wf-legend-bar { flex: 0 0 120px; height: 8px; border-radius: 4px;
+  background: linear-gradient(90deg, #0a1a3c 0%, var(--cyan) 50%, var(--amber) 100%); }
+.how { max-width: 720px; margin-top: .6rem; font-size: .78rem; color: var(--muted); }
+.how summary { cursor: pointer; color: var(--blue); font-size: .72rem; letter-spacing: .06em; }
+.how p { margin: .5rem 0 0; line-height: 1.55; }
 
-button[data-mode].active { background: #0e5fd8; border-color: #19b8d8; color: #fff;
-  box-shadow: 0 0 0 1px #19b8d8 inset; }
+/* ---------- modes + alerts ---------- */
+button {
+  background: var(--surface); color: var(--ink); border: 1px solid var(--edge);
+  border-radius: 10px; padding: .55rem 1.15rem; margin-right: .5rem; cursor: pointer;
+  font-family: var(--font-ui); font-size: .85rem; letter-spacing: .03em;
+  transition: border-color .2s, background .2s;
+}
+button:hover { border-color: var(--blue); }
+button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+button[data-mode].active { background: #0e5fd8; border-color: var(--cyan); color: #fff;
+  box-shadow: 0 0 0 1px var(--cyan) inset, 0 0 16px rgba(25,184,216,.25); }
+#cal { border-style: dashed; color: var(--blue); }
+ul { margin: 0; padding-left: 1.2rem; color: #ffb37a; font-family: var(--font-data);
+  font-size: .8rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  #srcbadge:not(:empty)::before { animation: none; }
+  .card, .rv-bar div { transition: none; }
+}
+@media (max-width: 640px) {
+  header { flex-wrap: wrap; }
+  header::after { display: none; }
+  #statecards .card { flex: 1 1 40%; min-width: 0; }
+}
