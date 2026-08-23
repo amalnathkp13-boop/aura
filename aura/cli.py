@@ -10,6 +10,7 @@ def main():
         sub.add_parser(c)
     p = sub.add_parser("replay"); p.add_argument("--session", required=True); p.add_argument("--speed", type=float, default=1.0)
     p = sub.add_parser("calibrate"); p.add_argument("phase", choices=["empty", "walk", "zone"]); p.add_argument("--minutes", type=int, default=10); p.add_argument("--name", default=None, help="zone name (phase 'zone' only)")
+    p = sub.add_parser("telegram-connect", help="wire Telegram alerts: create a bot with @BotFather, message it once, then run this with the token"); p.add_argument("--token", required=True)
     a = ap.parse_args()
     cfg = Config.load()
 
@@ -61,6 +62,18 @@ def main():
     elif a.cmd == "run-bridge":
         from aura.face.bridge import run_bridge
         run_bridge(cfg, threading.Event())
+
+    elif a.cmd == "telegram-connect":
+        from aura.guardian.notify import telegram_connect, _http_sender
+        chat_id, name = telegram_connect(a.token)
+        cfg_path = cfg.aura_home / "config.json"
+        merged = json.loads(cfg_path.read_text()) if cfg_path.exists() else {}
+        merged.update({"telegram_token": a.token, "telegram_chat_id": chat_id})
+        cfg_path.write_text(json.dumps(merged))
+        _http_sender(f"https://api.telegram.org/bot{a.token}/sendMessage",
+                     {"chat_id": chat_id, "text": "✅ Aura connected — alerts will arrive here."})
+        print(f"connected to chat {chat_id} ({name or 'unnamed'}); config written: {cfg_path}")
+        print("restart the guardian to pick it up: sudo systemctl restart aura-guardian")
 
     elif a.cmd == "calibrate":
         from aura.frames import read_frames
