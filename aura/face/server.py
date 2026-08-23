@@ -1,4 +1,4 @@
-import json, subprocess, sys
+import json, re, subprocess, sys
 from pathlib import Path
 from flask import Flask, jsonify, request, send_from_directory
 
@@ -84,14 +84,20 @@ def create_app(cfg):
         if not isinstance(body, dict):
             return jsonify({"error": "bad body"}), 400
         phase = body.get("phase")
-        if phase not in ("empty", "walk"):
+        if phase not in ("empty", "walk", "zone"):
             return jsonify({"error": "bad phase"}), 400
         try:
             minutes = int(body.get("minutes", 10))
         except (TypeError, ValueError):
             return jsonify({"error": "bad minutes"}), 400
-        subprocess.Popen([sys.executable, "-m", "aura.cli", "calibrate", phase,
-                          "--minutes", str(minutes)])
+        argv = [sys.executable, "-m", "aura.cli", "calibrate", phase,
+                "--minutes", str(minutes)]
+        if phase == "zone":
+            name = body.get("name")
+            if not (isinstance(name, str) and re.fullmatch(r"[a-z0-9_-]{1,16}", name)):
+                return jsonify({"error": "bad zone name (a-z 0-9 _ -, max 16)"}), 400
+            argv += ["--name", name]
+        subprocess.Popen(argv)
         return jsonify({"started": True})
 
     return app

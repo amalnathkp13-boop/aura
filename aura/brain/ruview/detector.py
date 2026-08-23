@@ -38,6 +38,10 @@ def raw_series(frames, link_id):
     return np.array(vals, dtype=np.float64), seen / max(1, len(frames))
 
 
+ZONE_MAX_DIST = 1.5     # log-feature Euclidean ceiling: farther than this from every zone -> no label
+ZONE_MIN_MARGIN = 0.2   # runner-up must be at least this much farther than the winner
+
+
 class RuViewDetector:
     def __init__(self, cal=None):
         rv = (cal or {}).get("rv") or {}
@@ -45,9 +49,47 @@ class RuViewDetector:
         self.motion_thresh = rv.get("motion_thresh") or {}
         self.act_floor = rv.get("act_floor", AUTO_ACT_FLOOR)
         self.act_ceil = rv.get("act_ceil", AUTO_ACT_CEIL)
+        self.zones = (cal or {}).get("zones") or {}
+        # per-channel empty-room variance p95: the floor above which live energy
+        # carries zone information (below it, the room could just be empty)
+        self._zone_floor = {lid: s["var_p95"]
+                            for lid, s in ((cal or {}).get("rv_empty") or {}).items()}
         self._extractor = RssiFeatureExtractor()
         self._last_motion_ts = None
+        self._last_zone = None    # sticky across still periods while presence holds
         self.last_detail = None   # per-channel breakdown of the latest update (for the dashboard)
+
+    def _match_zone(self, feats_by_lid):
+        """Nearest calibrated zone by Euclidean distance over log-scaled
+        (variance, motion_band_power) per shared channel. Magnitude is part of
+        the metric on purpose: with channels sharing one physical path, zones
+        separate by how HARD the paths are bent, not by cross-channel pattern
+        (measured 2026-08-23: two real zone signatures were cosine-0.997
+        parallel but 3x apart in magnitude). Known confound, stated in the UI:
+        motion vigour also scales magnitude. Returns (name, distance);
+        (None, best_distance) when no zone wins clearly."""
+        best, second, best_name = None, None, None
+        for name, sig in self.zones.items():
+            shared = [lid for lid in sig if lid in feats_by_lid]
+            # 1 shared channel is enough: discrimination is magnitude-driven and
+            # the link stream alone carries it; the scan channel flickers out of
+            # the live set whenever two consecutive scans agree (dead-flat skip).
+            if len(shared) < 1:
+                continue
+            a, b = [], []
+            for lid in shared:
+                f = feats_by_lid[lid]
+                a += [np.log1p(f.variance), np.log1p(f.motion_band_power)]
+                b += [np.log1p(sig[lid]["var"]), np.log1p(sig[lid]["mbp"])]
+            dist = float(np.linalg.norm(np.array(a) - np.array(b))) / np.sqrt(len(shared))
+            if best is None or dist < best:
+                best, second, best_name = dist, best, name
+            elif second is None or dist < second:
+                second = dist
+        if (best_name is not None and best <= ZONE_MAX_DIST
+                and (second is None or second - best >= ZONE_MIN_MARGIN)):
+            return best_name, best
+        return None, best
 
     def update(self, frames, link_ids, ts, frame_hz=4.0):
         if len(frames) >= 2 and frames[-1].ts > frames[0].ts:
@@ -88,6 +130,22 @@ class RuViewDetector:
 
         fused_mbp = sum(w * r.motion_band_energy for w, r in zip(weights, sensing)) / wsum
         confidence = sum(w * r.confidence for w, r in zip(weights, sensing)) / wsum
+
+        zone_dist = None
+        if self.zones:
+            feats_by_lid = {lid: f for lid, _, f, _ in channels}
+            # match whenever the live energy rises above the calibrated empty
+            # floor on any channel (a full motion vote is stricter than zone
+            # matching needs); the label then sticks while presence persists
+            # (a still person emits no zone information).
+            energetic = any(f.variance > self._zone_floor.get(lid, AUTO_VAR_THRESH)
+                            for lid, f in feats_by_lid.items())
+            if presence and (motion or energetic):
+                z, zone_dist = self._match_zone(feats_by_lid)
+                if z is not None:
+                    self._last_zone = z
+            if not presence:
+                self._last_zone = None
         self.last_detail = {
             "links": [{"id": lid, "rssi": round(rssi_last, 1),
                        "variance": round(r.rssi_variance, 4),
@@ -105,9 +163,14 @@ class RuViewDetector:
             "fused_breathing_energy": round(
                 sum(w * r.breathing_band_energy for w, r in zip(weights, sensing)) / wsum, 4),
         }
-        return {"presence": presence, "motion": motion,
-                "activity": round(self._activity(fused_mbp), 1),
-                "confidence": round(float(confidence), 3)}
+        state = {"presence": presence, "motion": motion,
+                 "activity": round(self._activity(fused_mbp), 1),
+                 "confidence": round(float(confidence), 3)}
+        if self.zones:
+            state["zone"] = self._last_zone
+            self.last_detail["zone"] = self._last_zone
+            self.last_detail["zone_dist"] = round(zone_dist, 3) if zone_dist is not None else None
+        return state
 
     def _activity(self, energy):
         lo, hi = self.act_floor, self.act_ceil

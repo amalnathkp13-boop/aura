@@ -61,6 +61,27 @@ def calibrate_empty(frames, k: int = 16) -> dict:
     cal["rv_act_floor"] = float(np.percentile(fused, 95)) if fused else AUTO_ACT_FLOOR
     return cal
 
+def calibrate_zone(frames, cal: dict, name: str) -> dict:
+    """Record a per-channel disturbance signature for one named zone: the user
+    stands at that spot and sways/steps in place while frames are captured.
+    Signature = per-channel median (variance, motion_band_power). Magnitude is
+    kept deliberately - distance from each radio path changes how hard that
+    path is bent, and that difference IS the zone information."""
+    per_link, _ = _rv_window_stats(frames, cal["link_ids"])
+    sig = {}
+    for lid, stats in per_link.items():
+        if len(stats) >= 3:
+            sig[lid] = {"var": float(np.median([v for v, _ in stats])),
+                        "mbp": float(np.median([m for _, m in stats]))}
+    if len(sig) < 2:
+        raise ValueError("not enough per-channel data for a zone signature - "
+                         "stay in the zone and keep moving gently")
+    out = {**cal}
+    zones = dict(out.get("zones") or {})
+    zones[name] = sig
+    out["zones"] = zones
+    return out
+
 def calibrate_walk(frames, cal: dict) -> dict:
     e = _window_energies(frames, cal["link_ids"])
     if not e:

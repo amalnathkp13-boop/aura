@@ -349,41 +349,159 @@ function drawGauge(conf) {
   ctx.fillText(Math.round(conf * 100) + '%', cx, cy - 6);
 }
 
-let rvSweep = 0;
-function drawRadar() {
-  const cv = $('rv-radar'), ctx = cv.getContext('2d');
-  const cx = cv.width / 2, cy = cv.height / 2, R = cv.width / 2 - 6;
-  // translucent repaint instead of clear -> the sweep leaves a fading trail
-  ctx.fillStyle = 'rgba(10, 16, 32, 0.18)';
-  ctx.fillRect(0, 0, cv.width, cv.height);
+// ---------------- Room view ----------------
+// Top-down sketch of the real radio paths. Geometry is schematic (device spots
+// are fixed), but everything that MOVES is measurement-driven: per-path glow =
+// that channel's live variance/threshold ratio, rings = CUSUM change-points,
+// lens glow = fused motion-band energy, and the presence marker drifts toward
+// the disturbance-weighted centroid of the over-threshold paths. No position
+// is measured; the marker is a signal-derived hint, and the UI says so.
+const ROOM_PAD = 10;
+let roomBlob = null;        // smoothed marker position {x, y}
+let roomRipples = [];       // [{x, y, r, alpha}]
+let roomRippleTs = null;    // last inference ts that spawned ripples
+let roomLensMax = 1e-6;     // self-scaling ceiling for lens glow (slow decay)
 
-  ctx.strokeStyle = 'rgba(122, 199, 255, 0.15)';
+function roomGeom(cv) {
+  const w = cv.width, h = cv.height;
+  const board = { x: ROOM_PAD + 0.10 * w, y: h - ROOM_PAD - 0.12 * h };
+  const phone = { x: w - ROOM_PAD - 0.10 * w, y: ROOM_PAD + 0.14 * h };
+  return { w, h, board, phone };
+}
+
+// One endpoint per AP channel: antenna glyphs spread along the top wall
+// (surrounding networks live outside the room; direction is schematic).
+function roomApEnd(g, idx, count) {
+  const f = (idx + 1) / (count + 1);
+  return { x: ROOM_PAD + 14 + f * (g.w - 2 * ROOM_PAD - 28), y: ROOM_PAD + 4 };
+}
+
+function drawDevice(ctx, p, label, on) {
+  ctx.fillStyle = on ? '#19b8d8' : '#3a4666';
+  ctx.fillRect(p.x - 5, p.y - 5, 10, 10);
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillStyle = '#6b7690';
+  ctx.fillText(label, p.x, p.y + 8);
+}
+
+function drawRoom() {
+  const cv = $('rv-room'), ctx = cv.getContext('2d');
+  const g = roomGeom(cv);
+  // translucent repaint instead of clear -> the marker leaves a fading trail
+  ctx.fillStyle = 'rgba(10, 16, 32, 0.13)';
+  ctx.fillRect(0, 0, g.w, g.h);
+
+  // room outline
+  ctx.strokeStyle = 'rgba(122, 199, 255, 0.22)';
   ctx.lineWidth = 1;
-  [0.33, 0.66, 1].forEach(f => {
-    ctx.beginPath(); ctx.arc(cx, cy, R * f, 0, 2 * Math.PI); ctx.stroke();
+  ctx.strokeRect(ROOM_PAD, ROOM_PAD, g.w - 2 * ROOM_PAD, g.h - 2 * ROOM_PAD);
+
+  const d = rvDetail;
+  const links = d ? d.links : [];
+  const apChannels = links.filter(l => l.id !== '__link__');
+  const linkCh = links.find(l => l.id === '__link__');
+
+  // disturbance ratio per channel: how far past its calibrated thresholds it is
+  const ratio = l => Math.max(l.variance / Math.max(l.var_thresh, 1e-9),
+                              l.band_energy / Math.max(l.motion_thresh, 1e-9));
+
+  // AP paths: thin lines board -> wall antennas, brightening with live disturbance
+  const anchors = [];   // [{x, y, w}] disturbance-weighted anchor candidates
+  apChannels.forEach((l, i) => {
+    const end = roomApEnd(g, i, apChannels.length);
+    const r = Math.min(2, ratio(l));
+    ctx.strokeStyle = `rgba(25, 184, 216, ${0.10 + 0.35 * Math.min(1, r)})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(g.board.x, g.board.y); ctx.lineTo(end.x, end.y); ctx.stroke();
+    ctx.fillStyle = '#3a4666';
+    ctx.fillRect(end.x - 2, end.y - 2, 4, 4);
+    ctx.font = '8px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillStyle = '#4a5673';
+    ctx.fillText(l.id.slice(0, 4), end.x, end.y + 4);
+    if (r > 0.5) anchors.push({ x: (g.board.x + end.x) / 2, y: (g.board.y + end.y) / 2, w: r });
   });
 
-  rvSweep += 0.02;
-  ctx.strokeStyle = 'rgba(122, 199, 255, 0.8)';
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + R * Math.cos(rvSweep), cy + R * Math.sin(rvSweep)); ctx.stroke();
+  // Fresnel lens on the main sensing link (board <-> phone): glow follows the
+  // fused motion-band energy, self-scaled like the meter bars.
+  if (d) roomLensMax = Math.max(d.fused_band_energy, roomLensMax * 0.995, 1e-6);
+  const lens = d ? Math.min(1, d.fused_band_energy / roomLensMax) : 0;
+  const mx = (g.board.x + g.phone.x) / 2, my = (g.board.y + g.phone.y) / 2;
+  const dx = g.phone.x - g.board.x, dy = g.phone.y - g.board.y;
+  const L = Math.hypot(dx, dy), ang = Math.atan2(dy, dx);
+  ctx.save();
+  // keep the lens and its glow inside the room outline
+  ctx.beginPath();
+  ctx.rect(ROOM_PAD, ROOM_PAD, g.w - 2 * ROOM_PAD, g.h - 2 * ROOM_PAD);
+  ctx.clip();
+  ctx.translate(mx, my); ctx.rotate(ang);
+  ctx.strokeStyle = `rgba(25, 184, 216, ${0.18 + 0.5 * lens})`;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.ellipse(0, 0, L / 2, L / 8, 0, 0, 2 * Math.PI); ctx.stroke();
+  ctx.setLineDash([3, 4]);
+  ctx.strokeStyle = `rgba(25, 184, 216, ${0.25 + 0.45 * lens})`;
+  ctx.beginPath(); ctx.moveTo(-L / 2, 0); ctx.lineTo(L / 2, 0); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+  if (linkCh && ratio(linkCh) > 0.5) anchors.push({ x: mx, y: my, w: ratio(linkCh) });
 
+  drawDevice(ctx, g.board, 'board', true);
+  drawDevice(ctx, g.phone, 'phone (hotspot)', true);
+
+  // rings on real CUSUM change-points, once per new inference
+  if (d && d.ts !== roomRippleTs) {
+    roomRippleTs = d.ts;
+    links.forEach((l, i) => {
+      if (l.change_points > 0) {
+        const p = l.id === '__link__' ? { x: mx, y: my }
+          : (() => { const e = roomApEnd(g, apChannels.indexOf(l), apChannels.length);
+                     return { x: (g.board.x + e.x) / 2, y: (g.board.y + e.y) / 2 }; })();
+        roomRipples.push({ x: p.x, y: p.y, r: 4, alpha: 0.7 });
+      }
+    });
+  }
+  roomRipples = roomRipples.filter(rp => rp.alpha > 0.02);
+  roomRipples.forEach(rp => {
+    ctx.strokeStyle = `rgba(255, 216, 60, ${rp.alpha})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r, 0, 2 * Math.PI); ctx.stroke();
+    rp.r += 1.4; rp.alpha *= 0.94;
+  });
+
+  // presence marker: disturbance-weighted centroid of the over-threshold paths,
+  // eased for legibility; rests on the lens centre when nothing distinguishes.
   const s = rvState;
   if (s && s.presence) {
+    let tx = mx, ty = my;
+    const wsum = anchors.reduce((a, c) => a + c.w, 0);
+    if (wsum > 0) {
+      tx = anchors.reduce((a, c) => a + c.x * c.w, 0) / wsum;
+      ty = anchors.reduce((a, c) => a + c.y * c.w, 0) / wsum;
+    }
+    if (!roomBlob) roomBlob = { x: tx, y: ty };
+    roomBlob.x += (tx - roomBlob.x) * 0.06;
+    roomBlob.y += (ty - roomBlob.y) * 0.06;
     const act = Math.max(0, Math.min(100, s.activity ?? 0));
     const pulse = s.motion ? 1 + 0.12 * Math.sin(performance.now() / 180) : 1;
-    const blobR = (14 + 0.55 * act) * pulse;
+    const blobR = (10 + 0.24 * act) * pulse;
     const col = s.motion ? '122, 255, 196' : '255, 216, 60';
-    const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, blobR);
+    const grad = ctx.createRadialGradient(roomBlob.x, roomBlob.y, 2, roomBlob.x, roomBlob.y, blobR);
     grad.addColorStop(0, `rgba(${col}, 0.85)`);
     grad.addColorStop(1, `rgba(${col}, 0)`);
     ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(cx, cy, blobR, 0, 2 * Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(roomBlob.x, roomBlob.y, blobR, 0, 2 * Math.PI); ctx.fill();
+    // zone hook: when zone sensing lands, the brain adds state.zone
+    if (s.zone) {
+      ctx.font = '10px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillStyle = '#dce3f0';
+      ctx.fillText(s.zone, roomBlob.x, roomBlob.y - blobR - 3);
+    }
+  } else {
+    roomBlob = null;
   }
-  requestAnimationFrame(drawRadar);
+  requestAnimationFrame(drawRoom);
 }
-requestAnimationFrame(drawRadar);
+requestAnimationFrame(drawRoom);
 
 document.querySelectorAll('button[data-mode]').forEach(b =>
   b.onclick = () => j('/api/mode', { method: 'POST', headers: { 'Content-Type': 'application/json' },

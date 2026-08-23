@@ -17,13 +17,13 @@
           <span class="rv-note">band energy — not a breathing rate</span></div>
       </div>
     </div>
-    <div class="rv-radarwrap"><canvas id="rv-radar" width="260" height="260"></canvas>
-      <div class="rv-note">abstract visualization — not spatial imaging</div></div>
+    <div class="rv-roomwrap"><canvas id="rv-room" width="340" height="250"></canvas>
+      <div class="rv-note">imaging-style room view — the marker rides whichever radio paths are being bent; signal-derived, not a measured position</div></div>
   </div>
   <div id="rv-links"></div>
   <div class="k rv-tickerhead">RF disturbance events (CUSUM change-points)</div><ul id="rv-ticker"></ul>
   <details class="how"><summary>How to read this</summary>
-    <p>Every WiFi path the board can hear acts as one "receiver". Each receiver card shows its live signal, how disturbed it is (variance vs. its calibrated threshold — yellow tick), the human-motion band energy, and its vote. The fused state needs a weighted majority — one noisy receiver cannot fake a person. The radar blob is an abstract presence indicator: its size tracks activity, it pulses with motion. No positions, poses, or vital signs are measured — RSSI physics cannot provide them.</p>
+    <p>Every WiFi path the board can hear acts as one "receiver". Each receiver card shows its live signal, how disturbed it is (variance vs. its calibrated threshold — yellow tick), the human-motion band energy, and its vote. The fused state needs a weighted majority — one noisy receiver cannot fake a person. The room view is a top-down sketch of those radio paths: the lens between board and phone is the main sensing link, the thin lines are surrounding-network paths. Each path brightens as its own live disturbance rises, rings fire on real change-point detections, and the presence marker drifts toward the centre of whichever paths are disturbed — its size tracks activity, it pulses with motion. Positions are derived from per-path signal ratios, not measured: RSSI physics cannot localise a person, which is why this is imaging-<em>style</em>, not imaging.</p>
   </details>
 </section>
 <section><h2>RF waterfall</h2>

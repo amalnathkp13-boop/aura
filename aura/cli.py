@@ -9,7 +9,7 @@ def main():
     for c in ("run-ear", "run-brain", "run-guardian", "run-face", "run-bridge", "status"):
         sub.add_parser(c)
     p = sub.add_parser("replay"); p.add_argument("--session", required=True); p.add_argument("--speed", type=float, default=1.0)
-    p = sub.add_parser("calibrate"); p.add_argument("phase", choices=["empty", "walk"]); p.add_argument("--minutes", type=int, default=10)
+    p = sub.add_parser("calibrate"); p.add_argument("phase", choices=["empty", "walk", "zone"]); p.add_argument("--minutes", type=int, default=10); p.add_argument("--name", default=None, help="zone name (phase 'zone' only)")
     a = ap.parse_args()
     cfg = Config.load()
 
@@ -64,7 +64,9 @@ def main():
 
     elif a.cmd == "calibrate":
         from aura.frames import read_frames
-        from aura.brain.calibrate import calibrate_empty, calibrate_walk
+        from aura.brain.calibrate import calibrate_empty, calibrate_walk, calibrate_zone
+        if a.phase == "zone" and not a.name:
+            raise SystemExit("calibrate zone needs --name")
         print(f"Capturing {a.minutes} min of live frames for phase '{a.phase}'...")
         t0 = time.time()
         time.sleep(a.minutes * 60)
@@ -72,6 +74,8 @@ def main():
         cal_path = cfg.aura_home / "calibration.json"
         if a.phase == "empty":
             cal = calibrate_empty(frames, cfg.top_k)
+        elif a.phase == "zone":
+            cal = calibrate_zone(frames, json.loads(cal_path.read_text()), a.name)
         else:
             cal = calibrate_walk(frames, json.loads(cal_path.read_text()))
         cal_path.write_text(json.dumps(cal))

@@ -31,8 +31,8 @@ h2 .rv-note { margin-left: .6rem; }
 .rv-meters { margin-top: .8rem; display: flex; flex-direction: column; gap: .6rem; max-width: 280px; }
 .rv-bar { height: 10px; border-radius: 5px; background: #0a1a3c; overflow: hidden; margin-top: .2rem; }
 .rv-bar div { height: 100%; width: 0; background: linear-gradient(90deg, #19b8d8, #ffd83c); transition: width .4s; }
-.rv-radarwrap { text-align: center; }
-#rv-radar { width: 260px; border-radius: 50%; background: #0a1020; image-rendering: auto; }
+.rv-roomwrap { text-align: center; max-width: 360px; }
+#rv-room { width: 340px; max-width: 100%; border-radius: 12px; background: #0a1020; border: 1px solid #1c2333; }
 #rv-links { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1rem; }
 .rv-linkcard { background: #121826; border: 1px solid #1c2333; border-radius: 10px; padding: .6rem .9rem; font-size: .75rem; min-width: 13rem; }
 .rv-linkcard .id { font-family: monospace; color: #7ac7ff; }
