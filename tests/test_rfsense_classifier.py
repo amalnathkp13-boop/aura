@@ -1,5 +1,5 @@
-from aura.brain.ruview.classifier_rv import PresenceClassifier, MotionLevel
-from aura.brain.ruview.features_rv import RssiFeatures
+from aura.brain.rfsense.classifier import PresenceClassifier, MotionLevel
+from aura.brain.rfsense.features import RssiFeatures
 
 def _feat(variance, motion=0.0, breathing=0.0, cps=0):
     return RssiFeatures(variance=variance, motion_band_power=motion,

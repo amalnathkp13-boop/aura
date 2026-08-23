@@ -1,7 +1,6 @@
-"""Rule-based presence/motion classifier, ported from RuView (MIT).
-
-Upstream: https://github.com/ruvnet/RuView @ 81cc241b9ebf8ccfb7cffd8e2e086e16c81f8a22
-File: archive/v1/src/sensing/classifier.py
+"""Rule-based presence/motion classifier, ported from an MIT-licensed upstream
+project. Full attribution, pinned upstream commit, and license text: NOTICE.md.
+Upstream file: archive/v1/src/sensing/classifier.py
 Rules and 60/20/20 confidence model kept verbatim; import paths and logging removed
 (see NOTICE.md). Per-link thresholds are injected by Aura's calibration.
 """
@@ -9,7 +8,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
 
-from aura.brain.ruview.features_rv import RssiFeatures
+from aura.brain.rfsense.features import RssiFeatures
 
 
 class MotionLevel(Enum):

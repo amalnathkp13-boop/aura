@@ -6,7 +6,7 @@ unable to see a person walk in)."""
 import numpy as np
 from aura.frames import RFFrame
 from aura.brain.calibrate import calibrate_empty
-from aura.brain.ruview.detector import RuViewDetector, DRIFT_DB, STALE_AFTER_S
+from aura.brain.rfsense.detector import RFDetector, DRIFT_DB, STALE_AFTER_S
 
 LINK_IDS = ["aaaaaaaa", "bbbbbbbb"]
 
@@ -62,7 +62,7 @@ def test_calibrate_empty_stores_rssi_median():
 
 
 def test_no_drift_at_calibrated_level():
-    det = RuViewDetector(_cal(-50.0))
+    det = RFDetector(_cal(-50.0))
     n = int((STALE_AFTER_S + 40) * 4)
     state = _drive(det, _quiet_frames(n, link_level=-50.0))
     assert state["presence"] == 0
@@ -70,7 +70,7 @@ def test_no_drift_at_calibrated_level():
 
 
 def test_sustained_empty_drift_flags_stale():
-    det = RuViewDetector(_cal(-50.0))
+    det = RFDetector(_cal(-50.0))
     n = int((STALE_AFTER_S + 40) * 4)
     state = _drive(det, _quiet_frames(n, link_level=-50.0 + DRIFT_DB + 12))
     assert state["presence"] == 0
@@ -78,7 +78,7 @@ def test_sustained_empty_drift_flags_stale():
 
 
 def test_drift_clears_when_level_returns():
-    det = RuViewDetector(_cal(-50.0))
+    det = RFDetector(_cal(-50.0))
     n = int((STALE_AFTER_S + 40) * 4)
     shifted = _quiet_frames(n, link_level=-30.0)
     assert _drive(det, shifted)["cal_stale"] is True
@@ -89,7 +89,7 @@ def test_drift_clears_when_level_returns():
 def test_presence_freezes_drift_clock():
     """A person shadowing the link can shift its level; occupied windows must
     neither accumulate toward stale nor clear an existing verdict."""
-    det = RuViewDetector(_cal(-50.0))
+    det = RFDetector(_cal(-50.0))
     n = int((STALE_AFTER_S + 60) * 4)
     state = _drive(det, _noisy_frames(n, link_level=-30.0))
     assert state["presence"] == 1

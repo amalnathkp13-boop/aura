@@ -1,8 +1,8 @@
 # aura/brain/calibrate.py
 import numpy as np
 from aura.brain.features import select_links, build_matrix, summary
-from aura.brain.ruview.features_rv import RssiFeatureExtractor
-from aura.brain.ruview.detector import (raw_series, LINK_STREAM,
+from aura.brain.rfsense.features import RssiFeatureExtractor
+from aura.brain.rfsense.detector import (raw_series, LINK_STREAM,
                                         AUTO_ACT_FLOOR, AUTO_ACT_CEIL)
 
 RV_VAR_MARGIN = 1.5   # presence threshold = empty p95 variance x this margin
@@ -21,7 +21,7 @@ def _window_energies(frames, link_ids, win_s=15.0, step_s=5.0):
 
 def _rv_window_stats(frames, link_ids, win_s=15.0, step_s=5.0):
     """Per-link per-window (variance, motion_band_power) plus the per-window
-    stability-weighted fused motion-band power - the RuView calibration inputs."""
+    stability-weighted fused motion-band power - the detector calibration inputs."""
     ex = RssiFeatureExtractor()
     per_link = {lid: [] for lid in list(link_ids) + [LINK_STREAM]}
     fused = []

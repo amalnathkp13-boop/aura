@@ -1,7 +1,6 @@
-"""RSSI feature extraction, ported from RuView (MIT).
-
-Upstream: https://github.com/ruvnet/RuView @ 81cc241b9ebf8ccfb7cffd8e2e086e16c81f8a22
-File: archive/v1/src/sensing/feature_extractor.py
+"""RSSI feature extraction, ported from an MIT-licensed upstream project.
+Full attribution, pinned upstream commit, and license text: NOTICE.md.
+Upstream file: archive/v1/src/sensing/feature_extractor.py
 Local changes (see NOTICE.md): numpy-only (scipy.fft -> np.fft; skewness/kurtosis
 dropped - never read by the classifier); WifiSample/window-trim path removed - Aura's
 brain owns windowing and calls extract_from_array() directly.

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from aura.frames import RFFrame
 from aura.brain.calibrate import calibrate_zone
-from aura.brain.ruview.detector import RuViewDetector
+from aura.brain.rfsense.detector import RFDetector
 
 LINK_IDS = ["aaaaaaaa", "bbbbbbbb"]
 
@@ -55,7 +55,7 @@ def test_calibrate_zone_rejects_empty_capture():
 
 
 def test_zone_matched_on_motion():
-    det = RuViewDetector(_cal_with_zones())
+    det = RFDetector(_cal_with_zones())
     r = det.update(_corridor_frames(seed=3)[-60:], LINK_IDS, ts=15.0)
     assert r["motion"] == 1
     assert r["zone"] == "corridor"
@@ -65,7 +65,7 @@ def test_zone_matched_on_motion():
 
 
 def test_zone_sticky_while_still_then_cleared():
-    det = RuViewDetector(_cal_with_zones())
+    det = RFDetector(_cal_with_zones())
     det.update(_corridor_frames(seed=5)[-60:], LINK_IDS, ts=15.0)
     # quiet window: still present (decay), no motion -> zone label sticks
     quiet = _frames(60, {"aaaaaaaa": 0.05, "bbbbbbbb": 0.05}, link_jitter=0.05, seed=6)
@@ -79,6 +79,6 @@ def test_zone_sticky_while_still_then_cleared():
 
 
 def test_no_zones_means_no_zone_key():
-    det = RuViewDetector(None)
+    det = RFDetector(None)
     r = det.update(_corridor_frames(seed=7)[-60:], LINK_IDS, ts=15.0)
     assert "zone" not in r

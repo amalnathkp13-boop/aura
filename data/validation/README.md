@@ -13,7 +13,7 @@ Full protocol: `docs/validation-protocol.md`. This is the condensed run card.
    `aura calibrate walk --minutes 5`.
 3. Restart brain to load thresholds (real terminal, needs board password):
    `ssh -t arduino@xfiles.local "sudo systemctl restart aura-brain"`
-4. Confirm: `state.json` has `src:"ruview"`; `calibration.json` has `"rv"` keys.
+4. Confirm: `state.json` has `src:"rfsense"`; `calibration.json` has `"rv"` keys.
 
 ## Session phases (record epoch at each boundary)
 Get epoch: `python -c "import time; print(time.time())"`

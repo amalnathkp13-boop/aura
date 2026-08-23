@@ -1,7 +1,7 @@
 import numpy as np
 from aura.frames import RFFrame
 from aura.brain.calibrate import calibrate_empty, calibrate_walk
-from aura.brain.ruview.detector import RuViewDetector, LINK_STREAM
+from aura.brain.rfsense.detector import RFDetector, LINK_STREAM
 
 def _frames(n, jitter, seed=0, hz=4.0):
     rng = np.random.default_rng(seed)
@@ -27,8 +27,8 @@ def test_calibration_produces_rv_thresholds_between_populations():
 def test_calibrated_detector_separates_empty_from_walk():
     cal = calibrate_empty(_frames(400, 0.3))
     cal = calibrate_walk(_frames(400, 4.0, seed=1), cal)
-    r_empty = RuViewDetector(cal).update(_frames(60, 0.3, seed=2), cal["link_ids"], ts=15.0)
-    r_walk = RuViewDetector(cal).update(_frames(60, 4.0, seed=3), cal["link_ids"], ts=15.0)
+    r_empty = RFDetector(cal).update(_frames(60, 0.3, seed=2), cal["link_ids"], ts=15.0)
+    r_walk = RFDetector(cal).update(_frames(60, 4.0, seed=3), cal["link_ids"], ts=15.0)
     assert r_empty["motion"] == 0
     assert r_walk["motion"] == 1 and r_walk["presence"] == 1
     assert r_walk["activity"] > r_empty["activity"]

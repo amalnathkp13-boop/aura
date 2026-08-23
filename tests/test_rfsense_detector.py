@@ -1,6 +1,6 @@
 import numpy as np
 from aura.frames import RFFrame
-from aura.brain.ruview.detector import RuViewDetector, raw_series, LINK_STREAM
+from aura.brain.rfsense.detector import RFDetector, raw_series, LINK_STREAM
 
 def _frames(n, jitters, link_jitter=0.0, seed=0, hz=4.0, t0=0.0):
     rng = np.random.default_rng(seed)
@@ -21,20 +21,20 @@ def test_raw_series_forward_fills_and_weights():
     assert abs(w - 0.5) < 0.01
 
 def test_quiet_room_absent():
-    det = RuViewDetector(None)
+    det = RFDetector(None)
     r = det.update(_frames(60, {"aaaaaaaa": 0.05, "bbbbbbbb": 0.05}, link_jitter=0.05),
                    ["aaaaaaaa", "bbbbbbbb"], ts=15.0)
     assert r["presence"] == 0 and r["motion"] == 0
 
 def test_moving_person_detected():
-    det = RuViewDetector(None)
+    det = RFDetector(None)
     r = det.update(_frames(60, {"aaaaaaaa": 4.0, "bbbbbbbb": 4.0}, link_jitter=4.0, seed=1),
                    ["aaaaaaaa", "bbbbbbbb"], ts=15.0)
     assert r["presence"] == 1 and r["motion"] == 1
     assert r["activity"] > 0 and 0.0 <= r["confidence"] <= 1.0
 
 def test_single_noisy_link_outvoted():
-    det = RuViewDetector(None)
+    det = RFDetector(None)
     r = det.update(_frames(60, {"aaaaaaaa": 0.05, "bbbbbbbb": 0.05, "cccccccc": 4.0},
                            link_jitter=0.05, seed=2),
                    ["aaaaaaaa", "bbbbbbbb", "cccccccc"], ts=15.0)
@@ -43,7 +43,7 @@ def test_single_noisy_link_outvoted():
 def test_flat_channel_ignored_not_counted_as_absent_vote():
     # one live moving wifi link + a perfectly constant link stream: the dead-flat
     # channel carries no information and must not outvote the live one.
-    det = RuViewDetector(None)
+    det = RFDetector(None)
     frames = _frames(60, {"aaaaaaaa": 4.0}, link_jitter=0.0, seed=3)
     for f in frames:
         f.link = [-50.0]               # exactly constant
@@ -51,7 +51,7 @@ def test_flat_channel_ignored_not_counted_as_absent_vote():
     assert r["presence"] == 1 and r["motion"] == 1
 
 def test_presence_decays_after_motion_stops():
-    det = RuViewDetector(None)
+    det = RFDetector(None)
     moving = _frames(60, {"aaaaaaaa": 4.0}, link_jitter=4.0, seed=1)
     quiet = _frames(60, {"aaaaaaaa": 0.05}, link_jitter=0.05, t0=30.0)
     assert det.update(moving, ["aaaaaaaa"], ts=15.0)["motion"] == 1
@@ -61,14 +61,14 @@ def test_presence_decays_after_motion_stops():
     assert r_late["presence"] == 0                             # decay expired
 
 def test_no_usable_channels_returns_none():
-    det = RuViewDetector(None)
+    det = RFDetector(None)
     frames = [RFFrame(ts=i / 4.0, wifi={}, link=[], ble={}) for i in range(60)]
     assert det.update(frames, [], ts=15.0) is None
     assert det.last_detail is None
 
 
 def test_update_populates_last_detail():
-    det = RuViewDetector(None)
+    det = RFDetector(None)
     frames = _frames(60, {"aaaaaaaa": 4.0, "bbbbbbbb": 0.05}, link_jitter=4.0, seed=1)
     det.update(frames, ["aaaaaaaa", "bbbbbbbb"], ts=15.0)
     d = det.last_detail

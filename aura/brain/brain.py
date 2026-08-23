@@ -5,7 +5,7 @@ import numpy as np
 from aura.frames import read_frames, tail_frames
 from aura.brain.features import select_links, build_matrix, summary
 from aura.brain.baseline import Baseline
-from aura.brain.ruview.detector import RuViewDetector
+from aura.brain.rfsense.detector import RFDetector
 
 def _atomic_write(path: Path, obj: dict):
     tmp = path.with_suffix(".tmp")
@@ -40,9 +40,9 @@ def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_i
     cal = _load_cal(cfg.aura_home)
     auto_mode = cal is None
     if cal is not None and cfg.detector != "baseline" and "rv" not in cal:
-        print("calibration.json predates ruview thresholds - re-run Learn my room; using defaults", flush=True)
+        print("calibration.json predates rv thresholds - re-run Learn my room; using defaults", flush=True)
     baseline = None
-    rvdet = RuViewDetector(cal)   # tolerates cal=None (upstream default thresholds)
+    rvdet = RFDetector(cal)   # tolerates cal=None (upstream default thresholds)
     window = deque(maxlen=int(cfg.window_seconds * cfg.frame_hz * 2))
     for f in read_frames(frames_path)[-window.maxlen:]:
         window.append(f)
@@ -85,8 +85,8 @@ def run_brain(cfg, frames_path: Path, stop_event, model_path: Path = None, max_i
         elif cfg.detector != "baseline":
             rv = rvdet.update(w, link_ids, ts=now, frame_hz=cfg.frame_hz)
             if rv is not None:   # None (no usable channels) -> keep baseline state
-                state, src = rv, "ruview"
-                _atomic_write(cfg.aura_home / "ruview.json",
+                state, src = rv, "rfsense"
+                _atomic_write(cfg.aura_home / "sense.json",
                               {"ts": now, **rvdet.last_detail, "state": {**state, "src": src}})
         _atomic_write(cfg.aura_home / "state.json", {"ts": now, **state, "src": src})
         with open(cfg.aura_home / "features.jsonl", "a", encoding="utf-8") as fh:

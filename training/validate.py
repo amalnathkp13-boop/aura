@@ -25,7 +25,7 @@ import numpy as np
 from aura.frames import read_frames
 from aura.brain.features import select_links, build_matrix, summary
 from aura.brain.baseline import Baseline
-from aura.brain.ruview.detector import RuViewDetector
+from aura.brain.rfsense.detector import RFDetector
 
 PRESENCE_TRUTH = {"empty": 0, "present": 1, "walking": 1}
 MOTION_TRUTH = {"empty": 0, "walking": 1}   # "present" (still) excluded: motion may be 0 or brief
@@ -38,7 +38,7 @@ def _truth_at(timeline, t_start, t_end):
     return None
 
 
-def validate(frames, timeline, cal=None, win_s=15.0, step_s=5.0, top_k=16, detector="ruview"):
+def validate(frames, timeline, cal=None, win_s=15.0, step_s=5.0, top_k=16, detector="rfsense"):
     if not frames:
         return {"windows": 0, "presence_acc": None, "n_presence": 0,
                 "motion_acc": None, "n_motion": 0,
@@ -49,7 +49,7 @@ def validate(frames, timeline, cal=None, win_s=15.0, step_s=5.0, top_k=16, detec
         base_cal = cal or {"link_ids": [], "empty_p995": 0.05, "activity_scale": 0.5}
         det = Baseline(base_cal)
     else:
-        det = RuViewDetector(cal)
+        det = RFDetector(cal)
     rows = []
     t = frames[0].ts
     while t + win_s <= frames[-1].ts:
@@ -100,7 +100,7 @@ def main():
     ap.add_argument("frames")
     ap.add_argument("timeline")
     ap.add_argument("--cal", default=None)
-    ap.add_argument("--detector", choices=["ruview", "baseline"], default="ruview")
+    ap.add_argument("--detector", choices=["rfsense", "baseline"], default="rfsense")
     a = ap.parse_args()
     frames = read_frames(Path(a.frames))
     timeline = json.loads(Path(a.timeline).read_text())

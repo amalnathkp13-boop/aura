@@ -18,7 +18,7 @@ async function tick() {
     document.body.classList.toggle('present', !!s.presence);
 
     rvState = s;
-    renderRuview(await j('/api/ruview'));
+    renderSense(await j('/api/sense'));
 
     if (tickCount % 2 === 0) {
       const rows = await j('/api/waterfall?n=120');
@@ -279,16 +279,16 @@ function drawSpectrogram(rows) {
   ctx.fillText('now', plotX + plotW - 2, timeY);
 }
 
-// ---------------- RuView console ----------------
-// All values shown are real detector internals (aura/brain/ruview): per-link
+// ---------------- RF sensing console ----------------
+// All values shown are real detector internals (aura/brain/rfsense): per-link
 // votes/thresholds, the fused vote fractions, and CUSUM change-point counts.
 // The radar is deliberately abstract - RSSI carries no position information.
 let rvState = {};          // latest /api/state (for the radar)
-let rvDetail = null;       // latest /api/ruview payload
+let rvDetail = null;       // latest /api/sense payload
 let rvLastTs = null;       // dedup: ticker fires once per new inference
 let rvMbandMax = 1e-6, rvBbandMax = 1e-6;  // self-scaling meter ceilings (slow decay)
 
-function renderRuview(d) {
+function renderSense(d) {
   rvDetail = (d && d.links) ? d : null;
   const stateEl = $('rv-state');
   if (!rvDetail) {

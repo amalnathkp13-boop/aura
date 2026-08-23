@@ -2,7 +2,7 @@
 
 ## RuView (MIT)
 
-`aura/brain/ruview/features_rv.py` and `aura/brain/ruview/classifier_rv.py` are ports of
+`aura/brain/rfsense/features.py` and `aura/brain/rfsense/classifier.py` are ports of
 code from the RuView project:
 
 - Repository: https://github.com/ruvnet/RuView

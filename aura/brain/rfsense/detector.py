@@ -1,6 +1,7 @@
-"""Multi-link fusion around the ported RuView classifier (Aura-original).
+"""Multi-link fusion around the ported upstream classifier (Aura-original;
+upstream attribution: NOTICE.md).
 
-Each WiFi link (plus the connected-link stream) is treated as one RuView
+Each WiFi link (plus the connected-link stream) is treated as one
 "receiver": features are extracted per link, each link is classified with the
 other links passed as other_receiver_results (upstream's own cross-receiver
 agreement), and the final decision is a stability-weighted vote. A single noisy
@@ -8,8 +9,8 @@ link cannot outvote several quiet ones; a dead-flat channel is skipped entirely.
 """
 import numpy as np
 
-from aura.brain.ruview.features_rv import RssiFeatureExtractor
-from aura.brain.ruview.classifier_rv import MotionLevel, PresenceClassifier
+from aura.brain.rfsense.features import RssiFeatureExtractor
+from aura.brain.rfsense.classifier import MotionLevel, PresenceClassifier
 
 LINK_STREAM = "__link__"
 PRESENCE_DECAY_S = 120.0     # mirrors Baseline.PRESENCE_DECAY_S
@@ -45,7 +46,7 @@ DRIFT_DB = 8.0          # link level this far from the calibration-time median =
 STALE_AFTER_S = 60.0    # sustained (empty-room) drift for this long -> calibration declared stale
 
 
-class RuViewDetector:
+class RFDetector:
     def __init__(self, cal=None):
         rv = (cal or {}).get("rv") or {}
         self.var_thresh = rv.get("var_thresh") or {}

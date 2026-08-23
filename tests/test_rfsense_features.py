@@ -1,5 +1,5 @@
 import numpy as np
-from aura.brain.ruview.features_rv import RssiFeatureExtractor, cusum_detect
+from aura.brain.rfsense.features import RssiFeatureExtractor, cusum_detect
 
 FS = 4.0
 

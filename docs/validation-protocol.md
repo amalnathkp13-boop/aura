@@ -16,8 +16,8 @@ and log fan state either way.
 On the dashboard press "Learn my room", or:
     aura calibrate empty --minutes 10     # leave the room first
     aura calibrate walk --minutes 5       # walk around the room
-This derives the per-link RuView thresholds (calibration.json, key "rv").
-Then restart the brain so it loads the new thresholds: `ssh -t arduino@xfiles.local "sudo systemctl restart aura-brain"` (needs the board password; run in a real terminal). Note: a calibration.json created before the RuView upgrade has no `rv` thresholds - re-run Learn my room once after deploying.
+This derives the per-link detector thresholds (calibration.json, key "rv").
+Then restart the brain so it loads the new thresholds: `ssh -t arduino@xfiles.local "sudo systemctl restart aura-brain"` (needs the board password; run in a real terminal). Note: a calibration.json created before the deterministic-detector upgrade has no `rv` thresholds - re-run Learn my room once after deploying.
 
 Board address: use `arduino@xfiles.local` (mDNS) — the phone hotspot randomizes
 its subnet on config changes, so a hard-coded IP goes stale (it did on
@@ -47,6 +47,6 @@ Write the timeline as JSON (absolute epoch seconds; get them with
 - false alarms: report empty_motion_false_windows / empty_hours (both in the tool's output) as false-alarm windows per empty hour.
 - Overnight bonus run: leave mode=Away armed all night, count alerts (< 1).
 
-Report both the RuView detector row and the baseline row (run validate twice,
+Report both the rfsense detector row and the baseline row (run validate twice,
 second time adding `--detector baseline`).
-Cite upstream RuView's own accuracy claims as upstream's, never as ours.
+Cite the upstream project's own accuracy claims (see NOTICE.md) as upstream's, never as ours.
