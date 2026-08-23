@@ -22,6 +22,15 @@ Ground truth comes from (a) the PC webcam labeler (`aura.labeler`) during attend
 
 **2026-08-20 (IST) network event + detector upgrade:** phone hotspot randomized its subnet (192.168.63.0/24 → 192.168.248.0/24); board now at 192.168.248.60 (use `arduino@xfiles.local`). Until the fix, the board's `gateway_ip` pointed at the dead old gateway → the link-RSSI stream (8-samples/frame channel) was degraded/absent for an UNKNOWN window ending **2026-08-19 19:40:36 UTC** (= 2026-08-20 01:10:36 IST), when config was corrected and aura-ear + aura-brain restarted. Treat frames in that window as scan-only (WiFi channels valid, link channel suspect). Same restart deployed the **RuView detector** (state.json `src: "ruview"`); board is UNCALIBRATED (no calibration.json) → auto-default thresholds until "Learn my room" is run per docs/validation-protocol.md.
 
+**2026-08-23 calibration session (~11:30–13:00 IST):** "Learn my room" completed end-to-end (calibration.json with full `rv` thresholds; brain reloaded 07:24:38 UTC). Hard-won lesson: **the hotspot phone is the far end of the sensing link** — it must sit parked and untouched in the board's room for every calibration phase AND validation. Attempt windows (UTC epochs), for anyone reusing frames.jsonl:
+- empty#1 1787464775–1787465375: mostly quiet; contaminated ~+300–420 s (phone handled outside the room).
+- walk#1 1787465643–1787465943 and walk#2 1787466238–1787466538: genuine walking but the user CARRIED the phone — link motion partly from the phone, not just the body. Gate correctly failed both.
+- empty#2 1787466976–1787467576: heavily contaminated (user actively using the phone outside the room) — do not use as empty truth.
+- board power-cycled onto a **new power supply** ~06:57 UTC; post-change static-link noise floor is var<1 (previously ≥1.3 even when quiet).
+- empty#3 1787468615–1787469215: CLEAN empty (phone parked, ceiling fan OFF, user away) — `empty_p995` 0.026.
+- walk#3 1787469348–1787469648: CLEAN walk (phone parked) — gate PASSED; walk/empty motion-band separation ≈3.6× on `__link__`.
+Fan state for all three clean windows: OFF (the fan-ON-empty contrast item below still stands).
+
 Open items:
 - [x] Board placement: user's bedroom, stays powered (2026-08-13)
 - [x] Labeler camera: DroidCam via direct MJPEG parser (2026-08-13)

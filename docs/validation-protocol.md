@@ -5,6 +5,14 @@ detection latency, false alarms. Total hands-on time ~2.5 h; the board records
 by itself throughout (aura-ear service, 4 Hz).
 
 ## 0. Calibrate the room (once per venue, ~15 min)
+**The hotspot phone is the far end of the sensing link.** It must sit in the
+board's room, parked and untouched (screen down, nobody using it), for BOTH
+calibration phases and the entire validation session. Carrying or using it —
+even outside the room — puts the sensor in your hand and poisons the capture
+(learned the hard way 2026-08-23: an "empty" room measured near-walking noise
+because the phone was in use elsewhere). Turn off fans near the sensing path,
+and log fan state either way.
+
 On the dashboard press "Learn my room", or:
     aura calibrate empty --minutes 10     # leave the room first
     aura calibrate walk --minutes 5       # walk around the room

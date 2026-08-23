@@ -3,6 +3,9 @@
 Full protocol: `docs/validation-protocol.md`. This is the condensed run card.
 
 ## Before the session
+0. **Phone (hotspot) parked in the board's room, untouched, for the whole
+   session** — it is the far end of the sensing link. Never carry or use it
+   during any phase. Fans near the sensing path OFF (log fan state).
 1. Board on + hotspot up; find it: `ssh arduino@xfiles.local` (mDNS), else
    ping-sweep the PC's /24 and match the ssh host key.
 2. Calibrate (once): dashboard "Learn my room", or

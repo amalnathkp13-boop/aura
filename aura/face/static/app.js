@@ -389,8 +389,18 @@ document.querySelectorAll('button[data-mode]').forEach(b =>
   b.onclick = () => j('/api/mode', { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mode: b.dataset.mode }) }));
 $('cal').onclick = async () => {
-  alert('Leave the room now. Aura will learn "empty" for 10 minutes, then ask you to walk.');
+  alert('Learn my room: the hotspot phone is the far end of the sensor — leave it in THIS room, ' +
+    'untouched, and leave the room without it. Aura learns "empty" for 10 minutes. ' +
+    'Keep this page open; it will ask you to walk afterwards.');
   await j('/api/calibrate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ phase: 'empty', minutes: 10 }) });
+  setTimeout(async () => {
+    alert('Empty phase done. Come back in (phone stays where it is), start walking around the room — ' +
+      'crossing between this device and the phone — then press OK and keep walking for 5 minutes.');
+    await j('/api/calibrate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phase: 'walk', minutes: 5 }) });
+    setTimeout(() => alert('Calibration captured. Restart the brain to load it: ' +
+      'sudo systemctl restart aura-brain'), 5.3 * 60 * 1000);
+  }, 10.3 * 60 * 1000);
 };
 tick();
