@@ -425,8 +425,12 @@ optional, outbound integration); total added hardware cost of zero.</p>
 <tr><td>1</td><td>Arduino UNO Q (Qualcomm QRB Linux SoC + STM32 Cortex-M33 MCU, on-board WiFi, 8×13 LED matrix)</td><td>1</td><td>The entire system: sensor, brain, display</td></tr>
 <tr><td>—</td><td><i>Already in the home:</i> WiFi hotspot/router; any browser on the LAN</td><td>—</td><td>Far end of the sensing link; user interface</td></tr>
 </table>
-<p>No circuit is constructed — there is nothing to wire. Figure 1 is the
-system diagram; the board is used exactly as shipped.</p>
+<p><b>Circuit schematic:</b> none exists to draw — no external circuit is
+constructed, no pin is wired, no peripheral is attached. The board is used
+exactly as shipped; Figure 1 (system diagram) documents the complete signal
+path in lieu of a schematic. This is the point of the project, not an
+omission. <b>The Arduino UNO Q is not merely the primary board — it is the
+only device in the system.</b></p>
 
 <h3>8.2 Repository map</h3>
 <table>
@@ -441,13 +445,17 @@ system diagram; the board is used exactly as shipped.</p>
 <tr><td class="mono">deploy/</td><td>One-command deploy + systemd units</td></tr>
 </table>
 
-<h3>8.3 Licensing</h3>
-<p>MIT-licensed, fully open source. The RSSI feature extractor and rule
-classifier are adapted from an MIT-licensed upstream project; the pinned
-upstream commit, file provenance, local modifications, and full license text
-are recorded in <code>NOTICE.md</code>. All other components — capture
-pipeline, multi-link fusion, zones, drift detection, calibration gates,
-dashboard, guardian, M33 app — are original to Aura.</p>
+<h3>8.3 Licensing, originality &amp; compliance</h3>
+<p>MIT-licensed, fully open source. Aura is an original, previously
+unpublished project, built solo for this challenge. In the spirit of good
+open-source practice we disclose proactively: the low-level RSSI feature
+extractor and rule classifier (two files) are adapted from an MIT-licensed
+upstream project, with the pinned upstream commit, file-level provenance,
+local modifications, and full license text recorded in <code>NOTICE.md</code>.
+Every other component — the capture pipeline, multi-link fusion, zone
+localization, drift detection, calibration quality gates, dashboard and RF
+console, guardian modes, validation tooling, and the M33 LED-matrix app —
+is original to Aura and written for this submission.</p>
 </section>
 
 <!-- ================= LIMITS ================= -->
