@@ -34,7 +34,7 @@ every number shown must come from the published validation data.
    pointer stays in README and NOTICE.md.
 3. **pyproject.toml** — version 1.0.0, description, readme, license, authors
    (names only), keywords, classifiers, project URLs,
-   `[tool.pytest.ini_options]`, `[tool.ruff]` selecting only E4/E7/E9/F.
+   `[tool.pytest.ini_options]`, `[tool.ruff]` selecting only E9 + F (syntax errors, undefined names, unused imports); E4/E7 style rules are excluded because the codebase's deliberate compact one-line style would produce ~70 purely stylistic hits.
 4. **.gitattributes** — `* text=auto eol=lf`; images/PDF/docx marked binary;
    one renormalisation commit.
 5. **CI** — `.github/workflows/ci.yml`: `lint` job (`ruff check`) and `test`
