@@ -32,8 +32,17 @@ def _rotate(path: Path, max_bytes: int = 50_000_000):
     if path.exists() and path.stat().st_size > max_bytes:
         path.rename(path.with_suffix(".jsonl.old"))
 
-def replay(session_path: Path, out_path: Path, speed: float = 1.0):
+def replay(session_path: Path, out_path: Path, speed: float = 1.0, start_s: float = 0.0):
+    """Stream a recorded session into out_path, re-stamped to wall-clock.
+
+    start_s: skip frames earlier than this many seconds after the recording's
+    first frame; pacing re-bases on the first kept frame so playback begins
+    immediately at the offset."""
     frames = read_frames(session_path)
+    if not frames:
+        return
+    origin = frames[0].ts
+    frames = [f for f in frames if f.ts - origin >= start_s]
     if not frames:
         return
     base = frames[0].ts

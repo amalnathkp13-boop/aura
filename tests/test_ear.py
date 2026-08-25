@@ -64,3 +64,15 @@ def test_ear_tolerates_none_pollers(tmp_path, monkeypatch):
     frames = read_frames(out)
     assert len(frames) >= 2
     assert frames[0].wifi == {} and frames[0].link == [] and frames[0].ble == {}
+
+def test_replay_start_s_trims_and_rebases(tmp_path):
+    from aura.ear.ear import replay
+    from aura.frames import RFFrame, append_frame
+    src = tmp_path / "rec.jsonl"
+    for i in range(6):
+        append_frame(src, RFFrame(ts=1000.0 + i * 0.25, wifi={"a": -50.0 - i}, link=[], ble={}))
+    dst = tmp_path / "live.jsonl"
+    replay(src, dst, speed=100.0, start_s=1.0)          # drops the first 4 frames (t=0.0..0.75)
+    out = read_frames(dst)
+    assert [f.wifi["a"] for f in out] == [-54.0, -55.0]  # frames 4 and 5 only
+    assert abs((out[1].ts - out[0].ts) - 0.25 / 100.0) < 0.5   # pacing re-based on the first kept frame
