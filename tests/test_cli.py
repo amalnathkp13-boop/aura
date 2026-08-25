@@ -18,3 +18,13 @@ def test_replay_subcommand(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["aura", "replay", "--session", str(src), "--speed", "1000"])
     main()
     assert len(read_frames(tmp_path / "frames.jsonl")) == 3
+
+def test_demo_subcommand_dispatches_before_config_load(tmp_path, monkeypatch):
+    import aura.demo
+    calls = {}
+    monkeypatch.setattr(aura.demo, "run_demo", lambda **kw: calls.update(kw))
+    monkeypatch.setattr("aura.cli.Config.load", lambda *a, **k: (_ for _ in ()).throw(AssertionError("Config.load must not run before demo")))
+    monkeypatch.setattr(sys, "argv", ["aura", "demo", "--no-browser", "--full", "--session", str(tmp_path / "s.jsonl")])
+    main()
+    assert calls["open_browser"] is False and calls["full"] is True
+    assert calls["session"] == tmp_path / "s.jsonl"

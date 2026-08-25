@@ -11,7 +11,18 @@ def main():
     p = sub.add_parser("replay"); p.add_argument("--session", required=True); p.add_argument("--speed", type=float, default=1.0)
     p = sub.add_parser("calibrate"); p.add_argument("phase", choices=["empty", "walk", "zone"]); p.add_argument("--minutes", type=int, default=10); p.add_argument("--name", default=None, help="zone name (phase 'zone' only)")
     p = sub.add_parser("telegram-connect", help="wire Telegram alerts: create a bot with @BotFather, message it once, then run this with the token"); p.add_argument("--token", required=True)
+    p = sub.add_parser("demo", help="no hardware: replay the published validation session through the production detector and open the dashboard")
+    p.add_argument("--session", type=Path, default=None, help="frames.jsonl to replay (default: the published 23-Aug session)")
+    p.add_argument("--full", action="store_true", help="replay from 0:00 (whole 57-min session) instead of just before the first entry")
+    p.add_argument("--no-browser", action="store_true")
     a = ap.parse_args()
+    if a.cmd == "demo":
+        import aura.demo
+        kw = {"open_browser": not a.no_browser, "full": a.full}
+        if a.session is not None:
+            kw["session"] = a.session
+        aura.demo.run_demo(**kw)
+        return
     cfg = Config.load()
 
     if a.cmd == "status":
