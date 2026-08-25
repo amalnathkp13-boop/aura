@@ -3,6 +3,16 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- `aura demo` — one-paste, no-hardware demo: replays the published validation
+  session through the production detector into a scratch home and opens the
+  dashboard on localhost (`--full`, `--no-browser`, `--session`).
+- `replay(start_s=…)` offset for the ear's session replay.
+- `aura demo` prints a clear message instead of a raw traceback when its
+  dashboard port is already in use.
+
 ## [1.0.0] — 2026-08-25
 
 State submitted to the Arduino Physical AI Challenge India 2026.

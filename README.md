@@ -3,7 +3,7 @@
 [![CI](https://github.com/amalnathkp13-boop/aura/actions/workflows/ci.yml/badge.svg)](https://github.com/amalnathkp13-boop/aura/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-106%20passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-112%20passing-brightgreen.svg)](tests/)
 [![Hardware](https://img.shields.io/badge/hardware-Arduino%20UNO%20Q%20only-00979D.svg)](#architecture)
 
 Every Arduino UNO Q already contains an invisible motion sensor: **its own radio**.
@@ -83,20 +83,40 @@ raised overall accuracy from 89.8 % to 94.9 % without adding a false alarm.
 
 ## Reproduce on your PC — no hardware
 
-The scored session, its calibration and its truth timeline are in the repo.
-Re-score them through the exact production detector:
+**One paste** — clone, install, `aura demo`. The RF Sensing Console opens in
+your browser and live-replays the published 23-Aug validation session through
+the exact production detector: a stable EMPTY room, the walk-in flip, four
+doorway entries, then a person sitting still. Replay is 1× (faithful — the
+detector's 15-s windows must see real dynamics). Ctrl+C stops it.
+
+```powershell
+# Windows (PowerShell)
+git clone https://github.com/amalnathkp13-boop/aura.git; cd aura
+python -m venv .venv
+.venv\Scripts\pip install -e .
+.venv\Scripts\aura demo
+```
+
+```bash
+# macOS / Linux
+git clone https://github.com/amalnathkp13-boop/aura.git && cd aura
+python3 -m venv .venv
+.venv/bin/pip install -e .
+.venv/bin/aura demo
+```
+
+`aura demo --full` replays from 0:00 (the whole 57-minute session, long empty
+phase included); `--no-browser` just serves `http://localhost:8080`. Everything
+runs in a scratch `.demo-home/` — your real `~/.aura` is never touched.
+
+**Re-score the session** — the same recording, calibration and truth timeline,
+scored by the validation harness:
 
 ```sh
-git clone https://github.com/amalnathkp13-boop/aura.git && cd aura
-python -m venv .venv && . .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-
-# Aura's fused detector
 python -m training.validate data/validation/session-2026-08-23-frames.jsonl data/validation/timeline.json --cal data/validation/calibration.json
-# the naive baseline, same data
 python -m training.validate data/validation/session-2026-08-23-frames.jsonl data/validation/timeline.json --cal data/validation/calibration.json --detector baseline
-
-python -m pytest tests/        # 106 tests
+python -m pytest tests/        # 112 tests
 ```
 
 `frames.jsonl` is also a flight recorder: `aura replay --session <file>` streams
@@ -183,7 +203,7 @@ say so).
 | `training/` | `validate.py` — the scoring harness behind every number above — plus the retired CNN experiment (`train.py`, `dataset.py`, `label_stream.py`); the shipped detector uses no learned model |
 | `data/validation/` | The scored 23-Aug session: frames, calibration, truth timeline, stopwatch taps, run card |
 | `docs/` | Validation protocol · data log · day-1 spike results · [future work](docs/future-work.md) · `submission/` (report, diagram, video script) · `superpowers/` (design specs and implementation plans — the project's design history) |
-| `tests/` | 106 tests: features, classification, fusion, calibration gates, drift, zones, services, dashboard API |
+| `tests/` | 112 tests: features, classification, fusion, calibration gates, drift, zones, services, dashboard API |
 
 ## Validation
 
@@ -196,7 +216,7 @@ boundaries and post-mortem is in [`docs/data-log.md`](docs/data-log.md).
 
 ## Tests
 
-106 automated tests cover feature extraction, classification, fusion,
+112 automated tests cover feature extraction, classification, fusion,
 calibration (including the walk gate and drift detection), zones, services,
 and the dashboard API. They run on every push (Ubuntu, Python 3.11 and 3.13):
 

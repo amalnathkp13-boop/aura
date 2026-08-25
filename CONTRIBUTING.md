@@ -9,7 +9,7 @@ bar for changes is "still explainable, still validated".
 git clone https://github.com/amalnathkp13-boop/aura.git && cd aura
 python -m venv .venv && . .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -e ".[dev,board]"
-python -m pytest tests/                            # 106 tests, ~30 s
+python -m pytest tests/                            # 112 tests, ~30 s
 ruff check aura training tests
 ```
 
