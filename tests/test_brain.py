@@ -1,6 +1,5 @@
 import json, threading
 import numpy as np
-from pathlib import Path
 from aura.config import Config
 from aura.frames import RFFrame, append_frame
 from aura.brain.brain import run_brain

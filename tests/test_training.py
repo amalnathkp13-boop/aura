@@ -1,5 +1,4 @@
 import numpy as np
-from pathlib import Path
 from aura.frames import RFFrame, append_frame
 from aura.labeler.labeler import write_label
 

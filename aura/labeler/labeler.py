@@ -16,7 +16,6 @@ def read_labels(path: Path):
 
 def run_labeler(out_path: Path, camera_index: int = 0):
     import cv2
-    import numpy as np
     from ultralytics import YOLO
     model = YOLO("yolov8n.pt")
     cap = cv2.VideoCapture(camera_index)

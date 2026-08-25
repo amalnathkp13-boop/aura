@@ -1,5 +1,4 @@
 import threading, time
-from pathlib import Path
 from aura.config import Config
 from aura.ear.ear import Ear
 from aura.frames import read_frames, hash_mac
