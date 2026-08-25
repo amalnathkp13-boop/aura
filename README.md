@@ -115,6 +115,16 @@ and the dashboard API:
 python -m pytest tests/
 ```
 
+## Limitations & future work
+
+Aura reports presence, motion, activity and a single zone label — it does
+**not** count people. Multi-person behaviour was outside the validation
+protocol and is not claimed. [`docs/future-work.md`](docs/future-work.md)
+records what the current detector does with 2+ occupants and lays out four
+routes toward a *nobody / one / more than one* answer on a bare UNO Q
+(multi-zone decomposition, known-device BLE fusion, an ath10k spectral-scan
+spike, and a multi-board mesh), in order of attack.
+
 ## License
 
 MIT (see [LICENSE](LICENSE)). Portions adapted from an MIT-licensed upstream
