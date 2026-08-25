@@ -3,7 +3,7 @@
 ## Access
 - Board: Arduino UNO Q, hostname `xfiles`, `arduino@192.168.63.60` (SSH key auth installed; password auth exists but is not used by tooling — never store it in this repo).
 - OS: Debian GNU/Linux 13 (trixie), kernel 6.16.7 aarch64, Python **3.13.5**, 4 cores, ~3.7 GB RAM (4GB variant).
-- Network: WiFi `wlan0`, gateway/hotspot `192.168.63.14` (phone hotspot "Amalnath"). `NetworkManager` active. Board clock is NTP-correct (UTC).
+- Network: WiFi `wlan0`, gateway/hotspot `192.168.63.14` (phone hotspot). `NetworkManager` active. Board clock is NTP-correct (UTC).
 
 ## WiFi sensing measurements
 - `iw` was NOT preinstalled → `apt-get install iw`; binary at **/usr/sbin/iw** (not in user PATH). A sudoers drop-in `/etc/sudoers.d/aura-iw` grants the `arduino` user passwordless `sudo iw` (daemons run as root via systemd and don't need it).
