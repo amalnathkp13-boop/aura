@@ -1,13 +1,39 @@
 [project]
 name = "aura"
-version = "0.1.0"
+version = "1.0.0"
+description = "Camera-free presence sensing on a bare Arduino UNO Q — the board's own radio as a privacy-first smart-home sensor"
+readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.9"
+authors = [
+  { name = "Kumaravel S" },
+  { name = "Amalnath K P" },
+]
+keywords = ["arduino", "uno-q", "wifi-sensing", "rssi", "presence-detection", "smart-home", "edge-ai", "privacy"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Home Automation",
+  "Topic :: Scientific/Engineering",
+  "Topic :: System :: Hardware",
+]
 dependencies = ["numpy", "flask", "requests"]
+
+[project.urls]
+Homepage = "https://github.com/amalnathkp13-boop/aura"
+Repository = "https://github.com/amalnathkp13-boop/aura"
+Issues = "https://github.com/amalnathkp13-boop/aura/issues"
+"Demo video" = "https://drive.google.com/file/d/16GfqoFsQ8vYzgybYod_s7oeFLkfacokY/view"
 
 [project.optional-dependencies]
 board = ["onnxruntime", "pyserial"]
 train = ["torch", "onnx", "onnxruntime", "ultralytics", "opencv-python", "onnxscript"]
-dev = ["pytest"]
+dev = ["pytest", "ruff"]
 
 [project.scripts]
 aura = "aura.cli:main"
@@ -18,3 +44,13 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["aura*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E9", "F"]
