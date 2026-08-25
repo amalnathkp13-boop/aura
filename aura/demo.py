@@ -3,7 +3,7 @@
 Replays the published validation session through the production detector into
 a scratch AURA_HOME and serves the dashboard on localhost. Never touches the
 user's real ~/.aura."""
-import os, shutil, threading, time, webbrowser
+import os, shutil, threading, webbrowser
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
