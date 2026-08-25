@@ -1,12 +1,37 @@
 # Aura — camera-free presence AI on a bare Arduino UNO Q
 
+[![CI](https://github.com/amalnathkp13-boop/aura/actions/workflows/ci.yml/badge.svg)](https://github.com/amalnathkp13-boop/aura/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
+[![Tests](https://img.shields.io/badge/tests-106%20passing-brightgreen.svg)](tests/)
+[![Hardware](https://img.shields.io/badge/hardware-Arduino%20UNO%20Q%20only-00979D.svg)](#architecture)
+
 Every Arduino UNO Q already contains an invisible motion sensor: **its own radio**.
 Aura turns it on with pure software — privacy-first presence, intrusion, and
 wellness sensing for smart homes, with **zero extra hardware, zero cameras,
 zero cloud, and zero training data**.
 
 Built for the **Arduino Physical AI Challenge India 2026** (theme: *Smart Homes
-& Consumer AI*).
+& Consumer AI*) by Kumaravel S and Amalnath K P.
+**[▶ Demo video](https://drive.google.com/file/d/16GfqoFsQ8vYzgybYod_s7oeFLkfacokY/view)** · [Project report (PDF)](docs/submission/Aura-Project-Report.pdf) · [Validation protocol](docs/validation-protocol.md)
+
+<p align="center">
+  <img src="docs/submission/Aura-Dashboard-Console.png" width="760" alt="Aura RF Sensing Console: presence PRESENT, per-link votes, thresholds, zone map">
+  <br><em>The RF Sensing Console — every decision traceable to a per-link threshold you calibrated.</em>
+</p>
+
+## Contents
+
+- [What it does](#what-it-does)
+- [Why it's different](#why-its-different)
+- [Results](#results)
+- [Reproduce on your PC — no hardware](#reproduce-on-your-pc--no-hardware)
+- [Architecture](#architecture)
+- [Detection pipeline](#detection-pipeline)
+- [Quick start (on the board)](#quick-start-on-the-board)
+- [Repository layout](#repository-layout)
+- [Validation](#validation) · [Tests](#tests) · [Limitations & future work](#limitations--future-work)
+- [Contributing](#contributing) · [License](#license) · [Competition submission](#competition-submission)
 
 ## What it does
 
@@ -37,7 +62,55 @@ Built for the **Arduino Physical AI Challenge India 2026** (theme: *Smart Homes
 | Cloud AI (subscription, data exfiltration) | 100% on-device; works with the internet down |
 | Black-box neural models | Deterministic, explainable signal processing — every decision traceable to a threshold you calibrated |
 
+## Results
+
+Scored live session, 23 Aug 2026, one operator, a real room, the hotspot
+phone parked as the far end of the link (`data/validation/`). Numbers are the
+output of `training/validate.py` on the published recording — not edited.
+
+| Metric | **Aura** (fused `rfsense`) | Naive single-threshold baseline |
+|---|---|---|
+| Presence accuracy (294 windows) | **94.9 %** | 51.4 % |
+| Motion accuracy (190 windows) | **91.6 %** | 77.9 % |
+| False-motion windows in the empty room (0.23 h) | **0** | 30 |
+| Doorway entries missed (4 entries) | **0** | 0 |
+| Entry latency, windowed tool median | 18.2 s | 33.2 s |
+
+The tool's latency has a ~15 s floor from the analysis window; the dashboard's
+first reaction to an entry is faster (features update every ~2 s) and was
+stopwatch-assessed during the session — see the report. Presence hysteresis
+raised overall accuracy from 89.8 % to 94.9 % without adding a false alarm.
+
+## Reproduce on your PC — no hardware
+
+The scored session, its calibration and its truth timeline are in the repo.
+Re-score them through the exact production detector:
+
+```sh
+git clone https://github.com/amalnathkp13-boop/aura.git && cd aura
+python -m venv .venv && . .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+
+# Aura's fused detector
+python -m training.validate data/validation/session-2026-08-23-frames.jsonl data/validation/timeline.json --cal data/validation/calibration.json
+# the naive baseline, same data
+python -m training.validate data/validation/session-2026-08-23-frames.jsonl data/validation/timeline.json --cal data/validation/calibration.json --detector baseline
+
+python -m pytest tests/        # 106 tests
+```
+
+`frames.jsonl` is also a flight recorder: `aura replay --session <file>` streams
+any recording back through the live pipeline, so an incident can be re-run
+offline through the same code that made the decision.
+
 ## Architecture
+
+<p align="center">
+  <img src="docs/submission/Aura-System-Diagram.png" width="760" alt="Aura system diagram: ear → brain → face/guardian on the Linux side; LED-matrix radar on the M33">
+</p>
+
+<details>
+<summary>Text version</summary>
 
 ```
              Arduino UNO Q (single device)
@@ -56,6 +129,8 @@ Built for the **Arduino Physical AI Challenge India 2026** (theme: *Smart Homes
 │  aura-guardian (modes, Telegram alerts)       │
 └───────────────────────────────────────────────┘
 ```
+
+</details>
 
 File-based pipeline of systemd daemons; each stage is independently
 restartable and replayable. `frames.jsonl` doubles as a flight recorder — any
@@ -97,19 +172,33 @@ when to redo it. Note the sensing zone includes the doorway — someone
 lingering just outside the door is legitimately detected (the zone label will
 say so).
 
+## Repository layout
+
+| Path | What it is |
+|---|---|
+| `aura/` | The product. `ear/` radio listener · `brain/` features, calibration, the `rfsense/` detector · `face/` Flask dashboard + M33 bridge · `guardian/` modes and Telegram · `labeler/` optional PC-side webcam truth-labeller (training-phase only, never on the board) · `cli.py` |
+| `board-app/aura-matrix/` | The shipped LED-matrix radar as an Arduino App: Linux-side Python talks to the M33 sketch over RouterBridge |
+| `sketch/aura_matrix/` | Earlier standalone serial-transport variant of the same matrix animation, kept for reference |
+| `deploy/` | `push.sh` (tar deploy), `install.sh` (systemd units), `fix-net.sh` (hotspot gateway one-shot), `systemd/` |
+| `training/` | `validate.py` — the scoring harness behind every number above — plus the retired CNN experiment (`train.py`, `dataset.py`, `label_stream.py`); the shipped detector uses no learned model |
+| `data/validation/` | The scored 23-Aug session: frames, calibration, truth timeline, stopwatch taps, run card |
+| `docs/` | Validation protocol · data log · day-1 spike results · [future work](docs/future-work.md) · `submission/` (report, diagram, video script) · `superpowers/` (design specs and implementation plans — the project's design history) |
+| `tests/` | 106 tests: features, classification, fusion, calibration gates, drift, zones, services, dashboard API |
+
 ## Validation
 
 `docs/validation-protocol.md` defines a scripted live session (empty /
 entries / sitting / walking, with declared truth timeline);
 `training/validate.py` scores recorded frames chronologically and reports
 presence accuracy, entry latency, and false-alarm windows per empty hour, for
-both the fused detector and a naive baseline.
+both the fused detector and a naive baseline. The full session log with phase
+boundaries and post-mortem is in [`docs/data-log.md`](docs/data-log.md).
 
 ## Tests
 
 106 automated tests cover feature extraction, classification, fusion,
 calibration (including the walk gate and drift detection), zones, services,
-and the dashboard API:
+and the dashboard API. They run on every push (Ubuntu, Python 3.11 and 3.13):
 
 ```sh
 python -m pytest tests/
@@ -125,6 +214,12 @@ routes toward a *nobody / one / more than one* answer on a bare UNO Q
 (multi-zone decomposition, known-device BLE fusion, an ath10k spectral-scan
 spike, and a multi-board mesh), in order of attack.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) (setup, ground rules, PR checklist)
+and [SECURITY.md](SECURITY.md) (private vulnerability reporting, deployment
+notes). Release history is in [CHANGELOG.md](CHANGELOG.md).
+
 ## License
 
 MIT (see [LICENSE](LICENSE)). Portions adapted from an MIT-licensed upstream
@@ -133,6 +228,8 @@ project — see [NOTICE.md](NOTICE.md).
 ## Competition submission
 
 Built for the **Arduino Physical AI Challenge India 2026** — category
-*Smart Homes & Consumer AI*. The submission bundle lives in
+*Smart Homes & Consumer AI* — by **Kumaravel S** (team lead) and
+**Amalnath K P**, Erode, Tamil Nadu. The submission bundle lives in
 [`docs/submission/`](docs/submission/): the project report (PDF), the system
-diagram, and the demo-video script.
+diagram, the demo-video script, and the console/board/alert images used in the
+report.
