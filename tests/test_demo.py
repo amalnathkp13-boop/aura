@@ -46,3 +46,20 @@ def test_demo_pipeline_replays_into_scratch_home_and_serves_sense(tmp_path, monk
     from aura.face.server import create_app
     r = create_app(cfg).test_client().get("/api/sense")
     assert r.status_code == 200 and "state" in r.get_json()
+
+def test_run_demo_reports_a_clear_error_when_the_port_is_busy(tmp_path, monkeypatch):
+    import pytest
+    import aura.demo as demo
+    from aura.frames import RFFrame, append_frame
+
+    class _BusyApp:
+        def run(self, host=None, port=None):
+            raise OSError(98, "Address already in use")
+
+    monkeypatch.setattr("aura.face.server.create_app", lambda cfg: _BusyApp())
+    src = tmp_path / "tiny.jsonl"
+    append_frame(src, RFFrame(ts=1.0, wifi={}, link=[], ble={}))
+    with pytest.raises(SystemExit) as ei:
+        demo.run_demo(session=src, home=tmp_path / "h", start_s=0.0, open_browser=False, serve=True)
+    msg = str(ei.value).lower()
+    assert "port" in msg and str(8080) in msg

@@ -77,6 +77,12 @@ def run_demo(session: Path = DEFAULT_SESSION, home: Path = DEFAULT_HOME,
         threading.Timer(2.0, webbrowser.open, args=(f"http://localhost:{port}",)).start()
     try:
         create_app(cfg).run(host="127.0.0.1", port=port)
+    except OSError as e:
+        stop.set()
+        raise SystemExit(
+            f"could not open the dashboard on port {port} ({e.strerror or e}). "
+            f"Another program is probably using port {port} - close it and run `aura demo` again."
+        )
     except KeyboardInterrupt:
         pass
     finally:
